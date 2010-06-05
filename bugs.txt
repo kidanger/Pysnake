@@ -1,0 +1,14 @@
+﻿Côté client :
+
+
+Problèmes: 
+- fermer fenetre jeu dans «invite de commandes»
+
+
+Côté serveur :
+
+-malus peut se mettre près d'un malus reglé je pense
+
+
+
+focus

@@ -1,0 +1,30 @@
+Classe Preappli : demande où se connecter (+ pseudo) [1]
+   => Connection
+   => Application
+
+Classe Connection : c'est elle qui gère TOUTE la communication client<->serveur [0.9 ?]
+   - Boucle pour reception : snakes/objets/murs [1]
+                             pseudo/score/chat [1]
+   
+   - Connection.envoyer(msg) ? : Méthode d'envois à partir de laquelle les autres methodes envoient leur msg au serveur (histoire de ne pas avoir des Sock.send partout)[1]
+
+   - Méthode move/say (/request) qui envois leur msg avec la méthode d'envois [1]
+
+Classe Application : Modifie le canevas (snakes, objets, murs) dans une boucle (can.delete(ALL) & sys.sleep(0.1)) [0.66]
+                     Modifie le tableau de score/pseudo dans la meme boucle tant qu'à faire... [1]
+                     Chat [1]
+                     Events [1]
+
+Classe Snake : liste des queues et de la tete, (positions, couleur de la tete)
+   - Méthode pour modifier la liste des positions
+   Note: Affichage récupère la liste des positions.[1 ?]
+
+Classe Objets : liste des objets (positions, type)
+   - Diverses méthodes pour supprimer/ajouter des objets
+   Note: Affichage récupère la liste des positions. [1]
+
+Classe Joueurs : liste des joueurs (pseudo, score)
+   - Diverses méthodes pour supprimer/ajouter/modifier des joueurs
+   Note: Affichage récupère la liste des pseudo & scores. [0.75 [du menage ?]]
+
+Classe Murs : liste des murs (position) [0.01]

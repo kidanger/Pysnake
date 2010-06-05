@@ -1,0 +1,214 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Nom : Pysnake
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Info : on est des XProgrammeurs: http://fr.wikipedia.org/wiki/Extreme_programming ^^
+
+
+
+Règles :
+- Si mange de la bouffe => points++; taille++
+- Murs ou adversaire => tu résu tout petit; score--
+- Ta queue => tu la coupe
+- Limite de score
+- Mode par équipe ? qu'en est t-il ?
+
+TODO:    -config http://docs.python.org/library/configparser.html
+         -map idem
+
+Communication client <-> serveur : #Ce que le serveur envoie au client pour qu'il comprenne
+
+From server :
+
+- Chat: #Si un client parle
+   - Id du joueur (qui parle)
+   - Phrase dite (un numéro suffit)
+   => "say i n"
+
+- Snakes : #Tout le temps
+   - Position de la tête
+   - Position de chaque partie de sa queue
+   - Couleur
+   => "snake id c,x,y;x,y;x,y" où id=id du client et c=couleur
+
+- Bouffe & Objets : #A chaque changement de place de la bouffe ou d'un objet
+   - De la bouffe (type = 0)
+   - Des objets :
+      - 1 = Accélérateur : Vitesse * 1.5 pendant 25 secondes                                        commun, 4
+      - 2 = Ralentisseur : Vitesse / 1.5 pendant 15 secondes                                        commun, 4
+      - 3 = Nocontrol : Paralysie pendant 5 secondes + 1 pt                                           rare, 2
+      - 4 = Demi-tour                                                                               "unco", 3
+      - 5 = Armagetronad powa : Augmente de 15 queues la taille du snake                              rare, 2
+      - 6 = Apocalypse : Tue tous les adversaires et l'utilisateur perd nb d'adversaire points   très rare, 1
+   => "objets x,y,type,id;x,y,type,id" où id=id de l'objet
+   => "objets EMPTY" si pas d'objets
+
+- Murs : #A la connexion du client
+   - Position des murs
+   - Un mur (= une case)
+   => "wall x y width height"
+
+- Score : #A chaque changement de score
+   - Valeur du score de chaque joueur
+   => "score i s" où i = id et s = score
+
+- Fin : 
+   - Serveur ferme
+   - Nouvelle partie/nouvelle map
+   => "clean all" supprime tout : objets, murs, snakes et scores (quand on change de map)
+   => "clean nomap" supprime tout sauf map (nouvelle partie mais sur les mêmes murs)
+   => "close" pour déconnecter tous les clients du serveur et fermer le serveur
+
+- Réponses aux requêtes :
+   - Don d'un joueur => "response joueur id pseudo score"
+   - Don d'un snake => "response snake id s" où s = "c,x,y;x,y;x,y"
+   - Don de la liste des murs => "response walls walls2" où walls2 = "x,y;x,y"
+   - Don de la liste des objets => "response objets objets2" où objets2 = 
+
+- Connection d'un client :
+   => "connect id pseudo"
+
+- Déconnection d'un client :
+   => "disconnect id"
+
+- Phrase du serveur :
+  - Phrase qui sera affichée dans le chat des clients
+  => "serv phrase"
+
+- Le serveur accepte un client:
+  => "OK id" où id est son id
+
+
+
+
+From client :
+
+- Chat : #Si F1..F12
+   - Phrase à dire
+   => "say n" où n = n° de la phrase
+
+- Mouvements : #Si Haut/Gauche/Droite/Bas
+   - gauche/droite/haut/bas
+   => "dir d" où d = direction (h, g, d, b) #anciennement "move x y"
+
+- "Je me connecte"
+   => "connect pseudo"
+
+- "Je me déconnecte"
+   => "close"
+
+- Requêtes : #A la connexion du client
+   - Demande de la liste des joueurs, de leur score et de leur id => "request joueurs"
+   - Demande de la liste des snakes => "request snakes"
+   - Demande de la liste des murs => "request walls"
+   - Demande de la liste des objets => "request objets"
+
+
+map1 :
+__________________________________________________
+|                                                 |
+| --->              ________                   |  |          
+|                   ||||||||                   |  |          
+|                   ||||||||                   _  |          
+|                   ||||||||                      |          
+|   |               ||||||||                 |    |          
+|   |                                        |    |          
+|   |                                        |    |          
+|   |  ------------------------------------  |    |          
+|   |                                        |    |          
+|   |                                        |    |          
+|   |               ________                 |    |          
+|                   ||||||||                      |          
+|                   ||||||||                      |          
+| _                 ||||||||                      |          
+| |                 ||||||||                      |          
+| |                                         <---  |          
+|_________________________________________________|
+
+
+murs1 = [3, 8, 3, 16] #murs de gauche
+murs2 = [6, 12, 26, 12] #murs du milieu
+murs3 = [29, 8, 29, 16] #murs de droite
+murs4 = [12, 3, 20, 8] #murs du haut
+murs5 = [12, 16, 20, 21] #murs du bas
+
+
+
+
+map2 :
+
+__________________________________________________
+|             |   |              |   |            |
+| --->        |   |              |   |         |  |          
+|             |___|              |___|         |  |          
+|                                              _  |          
+|                                                 |          
+|                       ____                      |          
+|                      ||||||                     |          
+|                      ||||||                     |          
+|---------    -----    ||||||    -----    ------- |          
+|                      ||||||                     |          
+|                      ||||||                     |          
+|                                                 |          
+|                                                 |          
+|             ____               _____            |          
+| _           |   |              |   |            |          
+| |           |   |              |   |            |          
+| |           |   |              |   |      <---  |          
+|_________________________________________________|
+
+      murs1 = [0, 12, 6, 12] #murs de gauche
+      murs2 = [9, 12, 12, 12] #2ème murs en partant de la gauche
+      murs3 = [14, 9, 18, 15] #murs du milieu
+      murs4 = [20, 12, 23, 12] #2ème murs en partant de la droite
+      murs5 = [26, 12, 31, 12] #murs de droite
+      murs6 = [9, 0, 12, 5] #murs en haut à gauche
+      murs7 = [20, 0, 23, 5] #murs en haut à droite
+      murs8 = [9, 19, 12, 23] #murs en bas à gauche
+      murs9 = [20, 19, 23, 23] #murs en bas à droite
+
+
+map3 :
+
+__________________________________________
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|________________________________________|
+
+| et _ étant des murs:
+[0, 0, 32, 1]
+[0, 1, 1, 24]
+[31, 1, 32, 24]
+[1, 23, 31, 24]
+
+
+map4
+__________________________________________
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|__________________|_____________________|
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|                  |                     |
+|__________________|_____________________|
+
+[16, 0, 16, 24]
+[0, 12, 34, 12]
+
+
+
