@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 config = ConfigParser.RawConfigParser()
-config.read("config")
+config.read("autoexec.cfg")
 
 #[Objets]
 OBJETS_WAIT_TIME = eval(config.get("Objets", "objets_wait_time"))

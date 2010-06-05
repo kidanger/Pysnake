@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 
 
-from pysnake_needed import *
+from client_needed import *
 import threading, sys, socket, urllib2, time, os
 from datetime import datetime
 from Tkinter import *
