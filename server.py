@@ -246,13 +246,13 @@ class Objets(threading.Thread):
 class Jeu(threading.Thread):
    
    def __init__(self, client):
-      global conn_client
+#      global conn_client
       threading.Thread.__init__(self, target = self.run)
       self.client = client
       couleurs = ["bleu", "jaune", "orange", "rose", "rouge", "vert", "violet"]
-      for x in conn_client:
-          if x and x.jeu:
-              couleurs.remove(x.jeu.couleur)
+      for x in range(1, len(clients)+1):
+         print clients[x].instance_jeu.couleur
+         couleurs.remove(clients[x].instance_jeu.couleur)
       self.couleur = couleurs[randrange(0, len(couleurs))]
       #self.couleur = str(murs.start_pos[self.client.id-1][0])
       self.score = 0
