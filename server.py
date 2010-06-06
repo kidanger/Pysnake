@@ -249,7 +249,12 @@ class Jeu(threading.Thread):
       global conn_client
       threading.Thread.__init__(self, target = self.run)
       self.client = client
-      self.couleur = str(murs.start_pos[self.client.id-1][0])
+      couleurs = ["bleu", "jaune", "orange", "rose", "rouge", "vert", "violet"]
+      for x in conn_client:
+          if x and x.jeu:
+              couleurs.remove(x.jeu.couleur)
+      self.couleur = couleurs[randrange(0, len(couleurs))]
+      #self.couleur = str(murs.start_pos[self.client.id-1][0])
       self.score = 0
       self.resu(0)
       self.deco = 0
@@ -886,11 +891,11 @@ class Quit(threading.Thread):
 
 def ip_ask():
    while 1:
-      demande = raw_input("Enter IP (keep empty for \"192.168.1.20\" as IP): ")
+      demande = raw_input("Enter IP (keep empty for \"127.0.0.1\" as IP): ")
       if demande != "":
          return demande
          break
-      else: return "192.168.1.20"
+      else: return "127.0.0.1"
 
 def main():
    ip = ip_ask()
