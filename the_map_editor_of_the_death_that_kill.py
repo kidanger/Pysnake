@@ -146,9 +146,10 @@ class Application():
       self.canevas = Canvas(self.fenetre_jeu, bg="white", width=CASES_X*TAILLE_CASE, height=CASES_Y*TAILLE_CASE)
       self.canevas.grid(row=0, padx=0)
       
-      self.canevas.bind('<ButtonRelease-3>', self.right_click)
       self.canevas.bind('<Button-1>', self.start_holding)
       self.canevas.bind('<ButtonRelease-1>', self.stop_holding)
+      self.canevas.bind('<Double-Button-1>', self.double_click)
+      self.canevas.bind('<ButtonRelease-3>', self.right_click)
       
       frame = Frame(self.fenetre_jeu)
       
@@ -196,6 +197,16 @@ class Application():
          if (case_x in xs) and (case_y in ys):
             return ["mur", i, case_x, case_y]
       return None
+   
+   def double_click(self, event):
+      e = self.get_element(event.x, event.y)
+      if e == None: return
+      if e[0] == "mur":
+         self.modif2(e[1])
+      elif e[0] == "tete":
+         self.start_pos2(e[1])
+      elif e[0] == "queue":
+         self.modif_start_pos(e[1], e[2])
    
    def right_click(self, event):
       e = self.get_element(event.x, event.y)
@@ -639,7 +650,8 @@ class Application():
    
    def actualise_modif_walls(self):
       self.clicked = -1
-      self.listbox.delete(0, END)
+      try: self.listbox.delete(0, END)
+      except: return
       for i in range(len(walls.list)):
          self.listbox.insert(i, walls.str(i))
    
@@ -784,7 +796,8 @@ class Application():
    
    def actualise_start_pos2(self, j):
       self.clicked2 = -1
-      self.listbox2.delete(0, END)
+      try: self.listbox2.delete(0, END)
+      except: return
       for i in range(len(start_pos.list[j])):
          self.listbox2.insert(i, start_pos.str(j, i))
    
@@ -902,7 +915,8 @@ class Application():
    
    def actualise_modif_start_pos(self):
       self.clicked3 = -1
-      self.listbox3.delete(0, END)
+      try: self.listbox3.delete(0, END)
+      except: return
       for i in range(len(COLORS)):
          self.listbox3.insert(i, COLORS[i])
    
