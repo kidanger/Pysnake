@@ -263,9 +263,9 @@ class Application():
       name = entry.get()
       if name == "": return
       maps = os.listdir(MAPS_DIR)
-      if name in maps and self.verif_chose(name) == 0: return #si veut pas remplacer fichier
+      if name in maps and self.verif_chose(name) == 0: return #is we don't want to replace
       self.map_name = name
-      self.set_saved(0) #pas sauvegardée
+      self.set_saved(0)
       self.fenetre_name.quit()
    
    
@@ -296,12 +296,13 @@ class Application():
       if number == "": return
       try: start_pos.number(int(number))
       except ValueError: return
+      self.affiche()
       self.fenetre_players.quit()
    
    
    def menu_options_add(self):
       config = ConfigParser.RawConfigParser()
-      try: config.read("config")
+      try: config.read("autoexec.cfg")
       except:
          self.message("Can't find server config.")
          return
@@ -319,8 +320,9 @@ class Application():
       
       maps.append(self.map_name)
       config.set("Game", "maps", maps)
-      file = open("config", "wb")
-      config.write()
+      file = open("autoexec.cfg", "w")
+      config.write(file)
+      file.close()
       self.message("Map added to server config.")
    
    
@@ -330,7 +332,7 @@ class Application():
    
    
    
-   def verif_chose(self, name): #quand on souhaite changer le nom d'une map, vérifie si ce nom n'existe pas déjà
+   def verif_chose(self, name): #when we wish change the name of the map, check if there isn't already a map with this name
       self.fen_verif = Toplevel()
       self.fen_verif.title("Pysnake Map Editor")
       self.fen_verif.grab_set()
@@ -352,13 +354,13 @@ class Application():
       self.fen_verif.mainloop()
       
       try: self.fen_verif.destroy()
-      except: return 0 #si on ferme la fenetre c'est comme si on annule
+      except: return 0 #close the window = "Cancel"
       return self.choix
    
    def verif_chose2(self, c):
-      if c == 0: #oui
+      if c == 0: #"Yes"
          self.choix = 1
-      elif c == 1: #annuler
+      elif c == 1: #"Cancel"
          self.choix = 0
       self.fen_verif.quit()
    
@@ -437,7 +439,7 @@ class Application():
    
    def menu_map_save(self, event=0):
       dir = "maps/"
-      if self.map_name == "": #map non loadée
+      if self.map_name == "":
          self.menu_options_chose()
          if self.map_name == "": #Cancel
             return
@@ -450,22 +452,22 @@ class Application():
          to_write += "\nplayer" + str(id+1) + " = ["
          j = start_pos.list[id]
          for i in j:
-            if j.index(i) == 0: #couleur
+            if j.index(i) == 0: #color
                to_write += "\""+i+"\""
             elif j.index(i) == 1: #direction
                to_write += ", \""+i+"\""
-            else: #tête ou queue
+            else: #head or tail
                to_write += ", [" + str(i[0]) + ", " + str(i[1]) + "]"
          to_write += "]"
       f.write(to_write)
       f.close()
-      self.set_saved(1) #sauvegardée
+      self.set_saved(1)
    
    
    
-   def verif_save(self): #quand on souhaite fermer une map, vérifie si celle-ci a bien été sauvegardée
-      if self.maping == 0: return 1 #tu peux y aller toute façon y a rien à fermer ;)
-      if self.saved == 1: return 1 #déjà sauvegardée
+   def verif_save(self): #when we wish close the map, we check that we want to save it or not
+      if self.maping == 0: return 1
+      if self.saved == 1: return 1
       
       self.fen_verif = Toplevel()
       self.fen_verif.title("Pysnake Map Editor")
@@ -491,16 +493,16 @@ class Application():
       self.fen_verif.mainloop()
       
       try: self.fen_verif.destroy()
-      except: return 0 #si on ferme la fenetre c'est comme si on annule
+      except: return 0 #close the window = "Cancel"
       return self.choix
    
    def verif_save2(self, c):
-      if c == 0: #oui
+      if c == 0: #"Yes"
          self.menu_map_save()
          self.choix = 1
-      elif c == 1: #non
+      elif c == 1: #"No"
          self.choix = 1
-      elif c == 2: #annuler
+      elif c == 2: #"Cancel"
          self.choix = 0
       self.fen_verif.quit()
    
@@ -904,7 +906,7 @@ class Application():
          self.listbox3.insert(i, COLORS[i])
    
    def modif_start_pos2(self, id_and_entries):
-      if id_and_entries[1] == 0: #couleur
+      if id_and_entries[1] == 0: #color
          j, i = id_and_entries
          c = self.clicked3
          if c == -1: return
@@ -915,7 +917,7 @@ class Application():
          d = var.get()
          print d
          start_pos.modif(j, i, d)
-      else: #tête ou queue
+      else: #head or tail
          j, i, e_x, e_y = id_and_entries
          try: x, y = int(e_x.get()), int(e_y.get())
          except ValueError: return
@@ -1004,7 +1006,7 @@ class Walls():
       x1, y1, x2, y2 = self.list[i]
       return str(x1) + ", " + str(y1) + ", " + str(x2) + ", " + str(y2)
    
-   def load(self, filename): #check section errors
+   def load(self, filename): #TODO: check section errors
       map = ConfigParser.RawConfigParser()
       try: map.read(MAPS_DIR+filename)
       except ConfigParser.MissingSectionHeaderError:
