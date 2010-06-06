@@ -7,7 +7,7 @@ from random import randrange
 from datetime import datetime
 
 
-DEBUG = True
+DEBUG = False
 
 
 config = ConfigParser.RawConfigParser()
@@ -894,7 +894,9 @@ class Quit(threading.Thread):
    
    def run(self):
       while 1:
-         rp = raw_input("Enter \"close\" to close\n")
+         rp = raw_input("Enter \"debug\" to set on/off the debug mode\nEnter \"close\" to close\n")
+         if rp.upper() == "DEBUG":
+            DEBUG = not DEBUG
          if rp.upper() == "CLOSE":
             for id in range(CLIENTS_MAX):
                try: 
