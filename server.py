@@ -889,7 +889,7 @@ class Quit(threading.Thread):
 
 
 
-def ip_ask():
+def ip_ask(): #unused
    while 1:
       demande = raw_input("Enter IP (keep empty for \"127.0.0.1\" as IP): ")
       if demande != "":
@@ -898,7 +898,8 @@ def ip_ask():
       else: return "127.0.0.1"
 
 def main():
-   ip = ip_ask()
+   #ip = ip_ask()
+   ip = "127.0.0.1" #et pas le choix :p
    port = 4000 #et pas le choix ! ;) ^^
    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
    try: mySocket.bind((ip, port))
