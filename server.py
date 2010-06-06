@@ -6,7 +6,7 @@ import sys, socket, threading, urllib, urllib2, time, datetime, os, ConfigParser
 from random import randrange
 from datetime import datetime
 
-
+global DEBUG
 DEBUG = False
 
 
@@ -265,7 +265,7 @@ class Jeu(threading.Thread):
       self.client = client
       couleurs = ["bleu", "jaune", "orange", "rose", "rouge", "vert", "violet"]
       for x in range(1, len(clients)+1):
-         log_debug("Remove color:" + clients[x].instance_jeu.couleur, "Client's game")
+         log_debug("Remove color: " + clients[x].instance_jeu.couleur, "Client's game")
          couleurs.remove(clients[x].instance_jeu.couleur)
       self.couleur = couleurs[randrange(0, len(couleurs))]
       #self.couleur = str(murs.start_pos[self.client.id-1][0])
@@ -681,7 +681,7 @@ class Client(threading.Thread):
          log_debug(str(self.id) + " wants to flood", "Client's Connection")
          self.envoyer("serv You're_not_allowed_to_flood_!", self.id, 0)
       if self.chat_time == -1:
-         log_debug(self.nom + "(" + self.pseudo + ") want to say the" + str(n) + "sentence", "Client's Connection")
+         log_debug(self.nom + " (" + self.pseudo + ") want to say the " + str(n) + " sentence", "Client's Connection")
          msg = "say " + str(self.id) + " " + str(n)
          for i in conn_client:
             self.envoyer(msg, i)
@@ -707,7 +707,7 @@ class Client(threading.Thread):
       msg = "disconnect "+str(self.id)
       for i in conn_client:
          self.envoyer(msg, i)
-      log(str(self.id) + "disconnected", "Client's Connection")
+      log(str(self.id) + " disconnected", "Client's Connection")
    
    def response_joueurs(self):
       log_debug("Request joueurs received", "Client's Connection")
@@ -838,14 +838,19 @@ class Client(threading.Thread):
                #A NETTOYER :
                doit_pas_rester_ici_sous_peine_de_violentes_insultes = 0
                try: msgClient[2]
-               except: print "Son pseudo :", self.pseudo
-               else: doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "?"
-               if len(self.pseudo) > 12: doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "??"
+               except: log("His nickname : " + self.pseudo, "Client's Connection")
+               else:
+                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "?"
+               if len(self.pseudo) > 12 or " " in self.pseudo:
+                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "??"
                for i in self.pseudo:
-                  if ord(i) >= 128: doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "???"; break
-                  if i == " ": doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "????"; break
-               if doit_pas_rester_ici_sous_peine_de_violentes_insultes: print "Celui là on le sort, pas de discution possible !"; break
-               if self.pseudo == "": self.pseudo = "Player_" + str(self.id)
+                  if ord(i) >= 128:
+                     doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "???"
+               if doit_pas_rester_ici_sous_peine_de_violentes_insultes:
+                  print "Celui là on le sort, pas de discution possible !"
+                  break
+               if self.pseudo == "":
+                  self.pseudo = "Player_" + str(self.id)
                self.envoyer("OK "+str(self.id), self.id)
                self.envoyer("serv "+self.pseudo+"_joins_the_game.")
                self.envoyer("serv Welcome_!_Have_Fun_!_:)", self.id)
@@ -880,7 +885,7 @@ class Client(threading.Thread):
       
       self.instance_jeu.deco = 1
       self.connexion.close()
-      log_debug(str(self.id) + "deco")
+      log_debug(str(self.id) + " deco")
       del conn_client[self.id]
       del clients[self.id].instance_jeu
       del clients[self.id]
@@ -896,7 +901,9 @@ class Quit(threading.Thread):
       while 1:
          rp = raw_input("Enter \"debug\" to set on/off the debug mode\nEnter \"close\" to close\n")
          if rp.upper() == "DEBUG":
+            global DEBUG
             DEBUG = not DEBUG
+            log(DEBUG, "Debug")
          if rp.upper() == "CLOSE":
             for id in range(CLIENTS_MAX):
                try: 
@@ -968,7 +975,6 @@ def main():
       #it = th.getName()
       if len(clients) == 1: #donc forcement l'id 1
          clients[1].instance_jeu.game_start()
-      log_debug(str(id) + "connected" + " ip = " + addresse[0])
    return 0
 
 if __name__ == '__main__': main()
