@@ -166,6 +166,7 @@ class Application():
       
       frame.grid(row=1)
       
+      self.load_img()
       self.affiche()
       
       self.set_maping(0)
@@ -946,6 +947,14 @@ class Application():
       self.clicked3 = int(i[0])
       print self.clicked3
    
+   def load_img(self):
+      self.img_murs = PhotoImage(file = "img/murs/murs.gif", master = self.canevas)
+      parties = ["corps", "tete_b", "tete_h", "tete_g", "tete_d"]
+      couleurs = ["bleu", "rouge", "vert", "jaune", "orange", "rose", "violet"]
+      for c in range(len(couleurs)):
+         for p in range(len(parties)):
+            exec("self.img_"+couleurs[c]+"_"+parties[p]+' = PhotoImage(file = "img/snakes/'+couleurs[c]+'/'+parties[p]+'.gif", master = self.canevas)')
+      
    
    def affiche(self):
       self.canevas.delete(ALL)
@@ -957,22 +966,43 @@ class Application():
                y1 = y * TAILLE_CASE
                x2 = x1 + TAILLE_CASE
                y2 = y1 + TAILLE_CASE
-               self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_MUR, width=0)
-      
+               #Old graphics:
+               #self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_MUR, width=0)
+               #New graphics:
+               self.canevas.create_image(x1, y1, anchor = NW, image=self.img_murs)
+
+
+      #[['bleu', 'd', [5, 1], [4, 1], [3, 1], [2, 1]],
+      #['rouge', 'g', [26, 22], [27, 22], [28, 22], [29, 22]],
+      #['jaune', 'h', [1, 18], [1, 19], [1, 20], [1, 21]],
+      #['vert', 'b', [30, 5], [30, 4], [30, 3], [30, 2]]]
       for j in start_pos.list:
-         for queue in j[3:]:
-            x1 = queue[0] * TAILLE_CASE
-            y1 = queue[1] * TAILLE_CASE
-            x2 = x1 + TAILLE_CASE
-            y2 = y1 + TAILLE_CASE
-            self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_QUEUE, width=0)
-         c_tete = start_pos.traduire(j[0])
+         #Old graphics:
+         #for queue in j[3:]:
+         #   x1 = queue[0] * TAILLE_CASE
+         #   y1 = queue[1] * TAILLE_CASE
+         #   x2 = x1 + TAILLE_CASE
+         #   y2 = y1 + TAILLE_CASE
+         #   self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_QUEUE, width=0)
+         #c_tete = start_pos.traduire(j[0])
+         #tete = j[2]
+         #x1_tete = tete[0] * TAILLE_CASE
+         #y1_tete = tete[1] * TAILLE_CASE
+         #x2_tete = x1_tete + TAILLE_CASE
+         #y2_tete = y1_tete + TAILLE_CASE
+         #self.canevas.create_rectangle((x1_tete, y1_tete, x2_tete, y2_tete), fill=c_tete, width=0)
+      
+         #New graphics:
+         couleur = j[0]
+         dir = j[1]
          tete = j[2]
          x1_tete = tete[0] * TAILLE_CASE
          y1_tete = tete[1] * TAILLE_CASE
-         x2_tete = x1_tete + TAILLE_CASE
-         y2_tete = y1_tete + TAILLE_CASE
-         self.canevas.create_rectangle((x1_tete, y1_tete, x2_tete, y2_tete), fill=c_tete, width=0)
+         self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=eval('self.img_'+couleur+'_' + "tete_"+dir))
+         for queue in j[3:]: #[x, y]
+            x1 = queue[0] * TAILLE_CASE
+            y1 = queue[1] * TAILLE_CASE
+            self.canevas.create_image(x1, y1, anchor = NW, image=eval("self.img_" + couleur + "_corps"))
       
       self.set_saved(0)
 
