@@ -883,8 +883,12 @@ class Quit(threading.Thread):
                   c = clients[id]
                   c.envoyer("close", id, 0)
                except KeyError: 0
-            #self.sock.close()
-            os._exit(0) # Solution miracle :D
+            break
+      #Logout from servermaster:
+      url = "http://pysnake.franceserv.com/masterserveur_serveur_quit.php"
+      req = urllib2.Request(url)
+      handle = urllib2.urlopen(req)
+      os._exit(0) # Solution miracle :D
 
 
 
