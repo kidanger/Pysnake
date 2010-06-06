@@ -7,6 +7,9 @@ from random import randrange
 from datetime import datetime
 
 
+DEBUG = True
+
+
 config = ConfigParser.RawConfigParser()
 config.read("autoexec.cfg")
 
@@ -38,6 +41,17 @@ LENGTH_MAX_CLIENT = 20
 
 LENGTH_QUEUE_MAX = 38
 
+def log(text, what = "Global", keap_suspence = 0):
+   if not keap_suspence and what != "":
+      print "[%s] %s" % (what, text)
+   elif keap_suspence:
+      print "["+what+"] "+text,
+   elif what == "":
+      print text
+
+def log_debug(text, what = "Global", keap_suspence=0):
+   if DEBUG:
+      log(text, what, keap_suspence)
 
 class Objets(threading.Thread):
 
@@ -53,7 +67,7 @@ class Objets(threading.Thread):
       
       while True:
          if len(clients) == 0:
-            print "Personne..."
+            log("Nobody...")
          else:
             self.bonus()
          if clients: time.sleep(OBJETS_WAIT_TIME/len(clients)) #Ajout "dynamique" d'objet
@@ -73,7 +87,7 @@ class Objets(threading.Thread):
             x = randrange(0, CASES_X)
             y = randrange(0, CASES_Y)
             if self.check(x, y):
-               print "Bonus : type", type
+               log("Bonus : type " + str(type), "Object")
                self.ajout(x, y, type)
                break
       
@@ -84,7 +98,7 @@ class Objets(threading.Thread):
                x = randrange(0, CASES_X)
                y = randrange(0, CASES_Y)
                if self.check(x, y):
-                  print "Malus : type", type
+                  log("Malus : type " + str(type), "Objet")
                   self.ajout(x, y, type)
                   return
          essaie = []
@@ -134,7 +148,7 @@ class Objets(threading.Thread):
                      x = randrange(0, CASES_X)
                      y = randrange(0, CASES_Y)
                      if self.check(x, y):
-                        print "Malus : type", type
+                        log("Malus : type " + str(type), "Objet")
                         self.ajout(x, y, type)
                         return
    
@@ -144,7 +158,7 @@ class Objets(threading.Thread):
          y = randrange(0, CASES_Y)
          if self.check(x, y):
             self.ajout(x, y, 0)
-            print "Bouffe"
+            log("Bouffe", "Object")
             break
    
    def clear(self):
@@ -232,9 +246,9 @@ class Objets(threading.Thread):
       return 1
    
    def suppr(self, id):
-      print "objet à suppr", id
+      log_debug("Object to delete " + str(id), "Object")
       try: del self.list[id]
-      except: print "Pas suppr"
+      except: log_debug("Not deleted", "Object")
       to_send = self.send_to_client()
       for id in clients:
          c = clients[id]
@@ -251,7 +265,7 @@ class Jeu(threading.Thread):
       self.client = client
       couleurs = ["bleu", "jaune", "orange", "rose", "rouge", "vert", "violet"]
       for x in range(1, len(clients)+1):
-         print clients[x].instance_jeu.couleur
+         log_debug("Remove color:" + clients[x].instance_jeu.couleur, "Client's game")
          couleurs.remove(clients[x].instance_jeu.couleur)
       self.couleur = couleurs[randrange(0, len(couleurs))]
       #self.couleur = str(murs.start_pos[self.client.id-1][0])
@@ -551,7 +565,7 @@ class Murs():
       config = ConfigParser.RawConfigParser()
       try: config.read("maps/"+MAPS[id])
       except:
-         print "Map not found, please change the \"maps\" option in config.ini"
+         log("Map not found, please change the \"maps\" option in config.ini", "Map")
          return 0
       #Murs:
       i = 0
@@ -569,7 +583,7 @@ class Murs():
             self.start_pos.append( eval(config.get("StartPos", "player"+str(i))) )
          except:
             break
-      print "MAP :", MAPS[id]
+      log("MAP : " + MAPS[id], "Map")
       self.map = MAPS[id]
       for i in clients:
          client = clients[i]
@@ -601,7 +615,7 @@ class MasterServer(threading.Thread):
    def run(self):
       url = "http://pysnake.franceserv.com/masterserveur_serveur.php"
       while 1:
-         #print "Requete sur le master serveur"
+         log_debug("Request on the masterserver", "MasterServer")
          req = urllib2.Request(url)
          handle = urllib2.urlopen(req)
          time.sleep(30) #suppr du master si pas actif pdt 1min
@@ -634,14 +648,14 @@ class Client(threading.Thread):
                   if ids[id] == 2:
                      try: conn_client[id].send(msg)
                      except socket.error:
-                        print "Broken pipe"
+                        log("Broken pipe", "Client's Connection")
                         self.connexion.close()
                         break
-                  else: print "Filtré pour" + str(id)
+                  else: log_debug("Filtred for" + str(id), "Client's Connection")
                else:
                   try: conn_client[id].send(msg)
                   except socket.error:
-                     print "Broken pipe"
+                     log("Broken pipe", "Client's Connection")
                      self.connexion.close()
                      break
       else: 
@@ -649,10 +663,10 @@ class Client(threading.Thread):
             try:
                conn_client[id_voulu].send(msg)
             except KeyError:
-               print "Connexion client pas encore prête..."
+               log("Connexion client pas encore prête...", "Client's Connection")
                time.sleep(0.1)
             except socket.error:
-               print "Broken pipe"
+               log("Broken pipe", "Client's Connection")
                self.connexion.close()
                break
             else: break
@@ -663,9 +677,11 @@ class Client(threading.Thread):
       if sec < self.chat_time: sec += 60
       if sec >= self.chat_time+TIME_BETWEEN_CHAT:
          self.chat_time = -1
-      else: self.envoyer("serv You're_not_allowed_to_flood_!", self.id, 0)
+      else:
+         log_debug(str(self.id) + " wants to flood", "Client's Connection")
+         self.envoyer("serv You're_not_allowed_to_flood_!", self.id, 0)
       if self.chat_time == -1:
-         print self.nom, "(", self.pseudo, ") want to say the", n, "sentence"
+         log_debug(self.nom + "(" + self.pseudo + ") want to say the" + str(n) + "sentence", "Client's Connection")
          msg = "say " + str(self.id) + " " + str(n)
          for i in conn_client:
             self.envoyer(msg, i)
@@ -685,41 +701,44 @@ class Client(threading.Thread):
          if c.id != self.id:
             msg = self.instance_jeu.send_to_client()
             self.envoyer(msg, c.id)
-            print "snake de "+str(self.id)+" envoyé à "+str(c.id)
+            log_debug("Snake of "+str(self.id)+" sent to "+str(c.id), "Client's Connection")
    
    def disconnect(self):
       msg = "disconnect "+str(self.id)
       for i in conn_client:
          self.envoyer(msg, i)
+      log(str(self.id) + "disconnected", "Client's Connection")
    
    def response_joueurs(self):
+      log_debug("Request joueurs received", "Client's Connection")
       for i in clients:
          c = clients[i]
          msg = "response joueur "+str(c.id)+" "+c.pseudo+" "+str(c.instance_jeu.score)
          self.envoyer(msg, self.id, 0)
-         print "réponse joueur de "+str(c.id)+" envoyée à "+str(self.id)
+         log_debug("Reply joueur of "+str(c.id)+" sent to "+str(self.id), "Client's Connection")
    
    def response_snakes(self):
+      log_debug("Request snake received", "Client's Connection")
       for i in clients:
          c = clients[i]
          msg = "response " #réponse à la requête
          msg += c.instance_jeu.send_to_client()
          self.envoyer(msg, self.id, 0)
-         print "réponse snake de "+str(c.id)+" envoyée à "+str(self.id)
+         log_debug("Reply snake of "+str(c.id)+" sent to "+str(self.id), "Client's Connection")
    
    def response_objets(self):
-      print "requête objets reçue"
+      log_debug("Request objets received", "Client's Connection")
       msg = "response "
       msg += objets.send_to_client()
       self.envoyer(msg, self.id, 0)
-      print "réponse objets envoyée à "+str(self.id)
+      log_debug("Reply objets sent to "+str(self.id), "Client's Connection")
    
    def response_murs(self):
-      print "requête murs reçue"
+      log_debug("Request murs received", "Client's Connection")
       msg = "response "
       msg += murs.send_to_client()
       self.envoyer(msg, self.id, 0)
-      print "réponse murs envoyée à "+str(self.id)
+      log_debug("Reply murs sent to "+str(self.id), "Client's Connection")
    
    
    
@@ -789,12 +808,12 @@ class Client(threading.Thread):
       while True:
          try: msgClient=self.connexion.recv(LENGTH_MAX_CLIENT)
          except: 
-            print "Le client a quitté pendant que le serveur écoutait son msg"
+            log("Le client a quitté pendant que le serveur écoutait son msg", "Client's Connection")
             break
          if msgClient == "":
-            print "Connection interrompue"
+            log("Connection interrompue", "Client's Connection")
             break
-         #print msgClient
+         #log_debug(msgClient)
          try: msgClient = msgClient[:msgClient.index('|')]
          except: pass #ça marche ça ?
          
@@ -803,7 +822,6 @@ class Client(threading.Thread):
             
             if msgClient[0] == "close":
                to_send = "serv "+self.pseudo+"_has_left_:(."
-               print to_send
                self.envoyer(to_send)
                self.disconnect()
                break
@@ -840,13 +858,13 @@ class Client(threading.Thread):
             elif msgClient[0] == "request":
             
                if msgClient[1] == "all":
-                  print "requête all reçue"
+                  log_debug("Request all received", "Client's Connection")
                   self.response_snakes()
                   self.response_joueurs()
                   self.response_objets()
                   self.response_murs()
                   ids[self.id] = 2
-                  print "Requetes envoyées à %s, donc il passe en \"2\"" % str(self.id)
+                  log_debug("Requetes envoyées à " +str(self.id)+ ", donc il passe en \"2\"", "Client's Connection")
                
                elif msgClient[1] == "joueurs":
                   self.response_joueurs()
@@ -862,7 +880,7 @@ class Client(threading.Thread):
       
       self.instance_jeu.deco = 1
       self.connexion.close()
-      print self.id, "deco"
+      log_debug(str(self.id) + "deco")
       del conn_client[self.id]
       del clients[self.id].instance_jeu
       del clients[self.id]
@@ -881,13 +899,16 @@ class Quit(threading.Thread):
             for id in range(CLIENTS_MAX):
                try: 
                   c = clients[id]
+                  c.envoyer("serv Server_shuts_down_:(")
                   c.envoyer("close", id, 0)
                except KeyError: 0
             break
-      #Logout from servermaster:
+      #Logout from masterserver:
+      log_debug("Logout from masterserver:", "Quit", 1)
       url = "http://pysnake.franceserv.com/masterserveur_serveur_quit.php"
       req = urllib2.Request(url)
       handle = urllib2.urlopen(req)
+      log_debug("Done", "")
       os._exit(0) # Solution miracle :D
 
 
@@ -906,12 +927,13 @@ def main():
    ip = "127.0.0.1" #et pas le choix :p
    port = 4000 #et pas le choix ! ;) ^^
    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+   log_debug(ip +" "+ str(port), "Bind ip")
    try: mySocket.bind((ip, port))
    except socket.error:
-      print socket.error
-      print "Failure"
+      log(socket.error, "Bind ip")
+      log("Failure", "Bind ip")
       sys.exit()
-   print "Ready"
+   log("Ready")
    MasterServer().start()
    mySocket.listen(CLIENTS_MAX)
    global conn_client
@@ -930,7 +952,7 @@ def main():
    Quit(mySocket).start()
    while True:
       connexion, addresse = mySocket.accept()
-      print "Un nouveau client"
+      log("New client : " + addresse[0])
       id = 0
       for i in range(CLIENTS_MAX+1):
          if ids[i] == 0:
@@ -944,7 +966,7 @@ def main():
       #it = th.getName()
       if len(clients) == 1: #donc forcement l'id 1
          clients[1].instance_jeu.game_start()
-      print id, "connecté", "ip :", addresse
+      log_debug(str(id) + "connected" + " ip = " + addresse[0])
    return 0
 
 if __name__ == '__main__': main()
