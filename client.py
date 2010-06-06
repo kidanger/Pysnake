@@ -135,7 +135,7 @@ class Preappli():
          page = urllib.urlopen("http://www.monip.org/").read()
          ip = page.split("IP : ")[1].split("<br>")[0]
          if self.clicked == ip: #on empèche au client de se co à sa propre ip
-            self.clicked = "192.168.1.20" #un peu barbare et marche que si ip local = .20
+            self.clicked = "127.0.0.1"
          try:
             print "Connection à", self.clicked
             self.Sock.connect((self.clicked, 4000))
