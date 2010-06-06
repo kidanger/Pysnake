@@ -558,7 +558,7 @@ class Murs():
       while 1:
          i += 1
          try:
-            self.list.append( eval(config.get("Murs", "murs" + str(i))) )
+            self.list.append( eval(config.get("Walls", "wall" + str(i))) )
          except:
             break
       #StartPos :
@@ -566,7 +566,7 @@ class Murs():
       while 1:
          i += 1
          try:
-            self.start_pos.append( eval(config.get("StartPos", "joueur"+str(i))) )
+            self.start_pos.append( eval(config.get("StartPos", "player"+str(i))) )
          except:
             break
       print "MAP :", MAPS[id]

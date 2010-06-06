@@ -2,9 +2,6 @@
 # -*- coding:Utf-8 -*-
 
 
-#TODO :
-#RIEN :)
-
 #DOC : http://gnuprog.info/prog/python/pwidget.php
 
 
@@ -18,9 +15,18 @@ TAILLE_CASE = 20
 C_MUR = "grey"
 C_QUEUE = "black"
 MAPS_DIR = os.getcwd() + "/maps/"
-COULEURS = ["blue", "red", "green", "yellow", "orange", "pink", "purple"]
+COLORS = ["blue", "red", "green", "yellow", "orange", "pink", "purple"]
 
 
+
+
+
+def clamp(int, min, max):
+	if int < min:
+		return min
+	elif int > max:
+		return max
+	return int
 
 
 
@@ -30,23 +36,23 @@ class Application():
    
    
    def __init__(self):
-      global murs
-      murs = Murs()
+      global walls
+      walls = Walls()
       global start_pos
       start_pos = Start_Pos()
       self.map_name = ""
-      self.holding = None #le réinit quand nv_map/load_map/close_map ?
+      self.holding = None
    
    
    def initialize(self):
-      murs.initialize()
-      start_pos.initialize(4) #4 joueurs
-      self.set_maping(1) #map créée
-      self.set_saved(0) #map non sauvegardée
+      walls.initialize()
+      start_pos.initialize(4)
+      self.set_maping(1)
+      self.set_saved(0)
    
    
    
-   def set_maping(self, maping):
+   def set_maping(self, maping): #enable some menus when we open/create a map
       self.maping = maping
       if maping == 0: s = "disabled"
       else: s = "normal"
@@ -65,7 +71,7 @@ class Application():
       self.bouton_define.configure(state=s)
    
    
-   def set_saved(self, saved):
+   def set_saved(self, saved): #enable Save menu when we the map isn't saved yet
       self.saved = saved
       if saved == 0: s = "normal"
       else: s = "disabled"
@@ -94,10 +100,10 @@ class Application():
       self.fenetre_jeu.grab_set()
       self.fenetre_jeu.focus_set()
       
-      #Création de la barre de menu :
+      #create menu :
       menus = Menu(self.fenetre_jeu)
       
-      #Création du menu Options :
+      #create Options menu :
       options = Menu(menus, tearoff=0)
       menus.add_cascade(label="Options", menu=options, underline=0)
       options.add_command(label="Chose Name", command=self.menu_options_chose, underline=6)
@@ -109,7 +115,7 @@ class Application():
       self.menu_options = options
       
       
-      #Création du menu Map :
+      #create Map menu :
       map = Menu(menus, tearoff=0)
       menus.add_cascade(label="Map", menu=map, underline=0)
       map.add_command(label="New", command=self.menu_map_new, accelerator="Ctrl+N", underline=0)
@@ -126,7 +132,7 @@ class Application():
       self.fenetre_jeu.bind("<Control-W>", self.menu_map_close)
       self.menu_map = map
       
-      #Création du menu Edit :
+      #create Edit menu :
       edit = Menu(menus, tearoff=0)
       menus.add_cascade(label="Edit", menu=edit, underline=0)
       edit.add_command(label="New Wall", command=self.menu_edit_new, underline=0)
@@ -140,7 +146,7 @@ class Application():
       self.canevas = Canvas(self.fenetre_jeu, bg="white", width=CASES_X*TAILLE_CASE, height=CASES_Y*TAILLE_CASE)
       self.canevas.grid(row=0, padx=0)
       
-      self.canevas.bind('<ButtonRelease-3>', self.clic_droit)
+      self.canevas.bind('<ButtonRelease-3>', self.right_click)
       self.canevas.bind('<Button-1>', self.start_holding)
       self.canevas.bind('<ButtonRelease-1>', self.stop_holding)
       
@@ -162,8 +168,8 @@ class Application():
       
       self.affiche()
       
-      self.set_maping(0) #pas de map créée/chargée
-      self.set_saved(1) #pas de map
+      self.set_maping(0)
+      self.set_saved(1)
       
       self.fenetre_jeu.mainloop()
       
@@ -172,10 +178,9 @@ class Application():
    
    
    
-   def element(self, mouse_x, mouse_y):
+   def get_element(self, mouse_x, mouse_y):
       case_x = mouse_x/TAILLE_CASE
       case_y = mouse_y/TAILLE_CASE
-      print "case_x : "+str(case_x) + ", case_y : " + str(case_y)
       for i_j in range(len(start_pos.list)):
          j = start_pos.list[i_j]
          if case_x == j[2][0] and case_y == j[2][1]:
@@ -184,18 +189,18 @@ class Application():
             i += 3
             if case_x == j[i][0] and case_y == j[i][1]:
                return ["queue", i_j, i]
-      for i in range(len(murs.list)):
-         xs = range(murs.list[i][0], murs.list[i][2]+1)
-         ys = range(murs.list[i][1], murs.list[i][3]+1)
+      for i in range(len(walls.list)):
+         xs = range(walls.list[i][0], walls.list[i][2]+1)
+         ys = range(walls.list[i][1], walls.list[i][3]+1)
          if (case_x in xs) and (case_y in ys):
             return ["mur", i, case_x, case_y]
       return None
    
-   def clic_droit(self, event):
-      e = self.element(event.x, event.y)
+   def right_click(self, event):
+      e = self.get_element(event.x, event.y)
       if e == None: return
       if e[0] == "mur":
-         del murs.list[e[1]]
+         del walls.list[e[1]]
          self.affiche()
       elif e[0] == "tete":
          self.start_pos2(e[1])
@@ -204,7 +209,7 @@ class Application():
          self.affiche()
    
    def start_holding(self, event):
-      e = self.element(event.x, event.y)
+      e = self.get_element(event.x, event.y)
       self.holding = e
    
    def stop_holding(self, event):
@@ -214,14 +219,18 @@ class Application():
       h = self.holding
       if h == None: return
       if h[0] == "mur":
-         m = murs.list[h[1]]
+         m = walls.list[h[1]]
          dif_x = case_x-h[2]
          dif_y = case_y-h[3]
          m[0] += dif_x
+         m[0] = clamp(m[0], 0, CASES_X-1)
          m[1] += dif_y
+         m[1] = clamp(m[1], 0, CASES_Y-1)
          m[2] += dif_x
+         m[2] = clamp(m[2], 0, CASES_X-1)
          m[3] += dif_y
-         murs.modif(h[1], m)
+         m[3] = clamp(m[3], 0, CASES_Y-1)
+         walls.modif(h[1], m)
       elif h[0] == "tete":
          start_pos.modif(h[1], 2, coords)
       elif h[0] == "queue":
@@ -376,14 +385,14 @@ class Application():
       self.listbox.pack(side = LEFT, fill = Y)
       scrollbar.pack(side = RIGHT, fill = Y)
       frame.grid(row=0, column=1)
-      self.listbox.bind('<ButtonRelease-1>', self.clic)
+      self.listbox.bind('<ButtonRelease-1>', self.click)
       self.actualise_load_map()
       
-      modify = Button(self.fenetre_load, text="Load", command=self.load)
-      modify.grid(row=1, column=0, pady=5)
+      load = Button(self.fenetre_load, text="Load", command=self.load)
+      load.grid(row=1, column=0, pady=5)
       
-      modify = Button(self.fenetre_load, text="Refresh", command=self.actualise_load_map)
-      modify.grid(row=1, column=1, pady=5)
+      refresh = Button(self.fenetre_load, text="Refresh", command=self.actualise_load_map)
+      refresh.grid(row=1, column=1, pady=5)
       
       cancel = Button(self.fenetre_load, text="Cancel", command=self.fenetre_load.quit)
       cancel.grid(row=1, column=2, pady=5)
@@ -405,7 +414,7 @@ class Application():
          i = self.clicked
          if i == -1: return
          filename = self.listbox.get(i)
-         if murs.load(filename) == 0: return #murs inlisables
+         if walls.load(filename) == 0: return #walls inlisables
          if start_pos.load(filename) == 0: return #start pos inlisables
          print "Loaded : "+filename
          self.map_name = filename
@@ -433,12 +442,12 @@ class Application():
          if self.map_name == "": #Cancel
             return
       f = file(dir + self.map_name, "w")
-      to_write = "[Murs]"
-      for i in range(len(murs.list)):
-         to_write += "\nmurs" + str(i+1) + " = [" + murs.str(i) + "]"
+      to_write = "[Walls]"
+      for i in range(len(walls.list)):
+         to_write += "\nwall" + str(i+1) + " = [" + walls.str(i) + "]"
       to_write += "\n\n[StartPos]"
       for id in range(len(start_pos.list)):
-         to_write += "\njoueur" + str(id+1) + " = ["
+         to_write += "\nplayer" + str(id+1) + " = ["
          j = start_pos.list[id]
          for i in j:
             if j.index(i) == 0: #couleur
@@ -524,7 +533,7 @@ class Application():
       
       entries = [x1, y1, x2, y2]
       
-      create = Button(self.fen, text="Create", command=lambda e=entries: self.ajout_murs(e))
+      create = Button(self.fen, text="Create", command=lambda e=entries: self.ajout_walls(e))
       create.grid(row=2, column=0, pady=5)
       
       cancel = Button(self.fen, text="Cancel", command=self.fen.quit)
@@ -535,13 +544,13 @@ class Application():
       try: self.fen.destroy()
       except: 0
    
-   def ajout_murs(self, entries):
+   def ajout_walls(self, entries):
       e_x1, e_y1, e_x2, e_y2 = entries
       try: x1, y1, x2, y2 = int(e_x1.get()), int(e_y1.get()), int(e_x2.get()), int(e_y2.get())
       except ValueError: return
       if x2 < x1 or y2 < y1: return
       if x1 < 0 or x2 >= CASES_X or y1 < 0 or y2 >= CASES_Y: return
-      murs.ajout([x1, y1, x2, y2])
+      walls.ajout([x1, y1, x2, y2])
       self.fen.quit()
       self.affiche()
    
@@ -564,10 +573,10 @@ class Application():
       self.listbox.pack(side = LEFT, fill = Y)
       scrollbar.pack(side = RIGHT, fill = Y)
       frame.grid(row=2, column=1)
-      self.listbox.bind('<ButtonRelease-1>', self.clic)
-      self.actualise_remove_murs()
+      self.listbox.bind('<ButtonRelease-1>', self.click)
+      self.actualise_remove_walls()
       
-      delete = Button(self.fen2, text="Remove", command=self.suppr_murs)
+      delete = Button(self.fen2, text="Remove", command=self.suppr_walls)
       delete.grid(row=2, column=0, pady=5)
       
       cancel = Button(self.fen2, text="Cancel", command=self.fen2.quit)
@@ -578,18 +587,18 @@ class Application():
       try: self.fen2.destroy()
       except: 0
    
-   def actualise_remove_murs(self):
+   def actualise_remove_walls(self):
       self.clicked = -1
       self.listbox.delete(0, END)
-      for i in range(len(murs.list)):
-         self.listbox.insert(i, murs.str(i))
+      for i in range(len(walls.list)):
+         self.listbox.insert(i, walls.str(i))
    
-   def suppr_murs(self):
+   def suppr_walls(self):
       id = self.clicked
       if id == -1: return
-      print "Wall removed : "+str(murs.list[id])
-      murs.suppr(id)
-      self.actualise_remove_murs()
+      print "Wall removed : "+str(walls.list[id])
+      walls.suppr(id)
+      self.actualise_remove_walls()
       self.affiche()
    
    
@@ -611,10 +620,10 @@ class Application():
       self.listbox.pack(side = LEFT, fill = Y)
       scrollbar.pack(side = RIGHT, fill = Y)
       frame.grid(row=0, column=1)
-      self.listbox.bind('<ButtonRelease-1>', self.clic)
-      self.actualise_modif_murs()
+      self.listbox.bind('<ButtonRelease-1>', self.click)
+      self.actualise_modif_walls()
       
-      modify = Button(self.fen3, text="Modify", command=self.modif_murs)
+      modify = Button(self.fen3, text="Modify", command=self.modif_walls)
       modify.grid(row=1, column=0, pady=5)
       
       cancel = Button(self.fen3, text="Cancel", command=self.fen3.quit)
@@ -625,13 +634,13 @@ class Application():
       try: self.fen3.destroy()
       except: 0
    
-   def actualise_modif_murs(self):
+   def actualise_modif_walls(self):
       self.clicked = -1
       self.listbox.delete(0, END)
-      for i in range(len(murs.list)):
-         self.listbox.insert(i, murs.str(i))
+      for i in range(len(walls.list)):
+         self.listbox.insert(i, walls.str(i))
    
-   def modif_murs(self):
+   def modif_walls(self):
       id = self.clicked
       if id == -1: return
       print id
@@ -644,7 +653,7 @@ class Application():
       self.fen4.grab_set()
       self.fen4.focus_set()
       
-      mur = murs.list[id]
+      mur = walls.list[id]
       
       Label(self.fen4, text="x1 :").grid(row=0, column=0)
       x1 = Entry(self.fen4, width=2)
@@ -668,7 +677,7 @@ class Application():
       
       id_and_entries = [id, x1, y1, x2, y2]
       
-      modify = Button(self.fen4, text="Modify", command=lambda e=id_and_entries: self.modif_murs2(e))
+      modify = Button(self.fen4, text="Modify", command=lambda e=id_and_entries: self.modif_walls2(e))
       modify.grid(row=2, column=0, padx=2, pady=5)
       
       cancel = Button(self.fen4, text="Cancel", command=self.fen4.quit)
@@ -678,15 +687,15 @@ class Application():
       
       try: self.fen4.destroy()
       except: return
-      self.actualise_modif_murs()
+      self.actualise_modif_walls()
    
-   def modif_murs2(self, id_and_entries):
+   def modif_walls2(self, id_and_entries):
       id, e_x1, e_y1, e_x2, e_y2 = id_and_entries
       try: x1, y1, x2, y2 = int(e_x1.get()), int(e_y1.get()), int(e_x2.get()), int(e_y2.get())
       except ValueError: return
       if x2 < x1 or y2 < y1: return
       if x1 < 0 or x2 >= CASES_X or y1 < 0 or y2 >= CASES_Y: return
-      murs.modif(id, [x1, y1, x2, y2])
+      walls.modif(id, [x1, y1, x2, y2])
       self.fen4.quit()
       self.affiche()
    
@@ -709,7 +718,7 @@ class Application():
       self.listbox.pack(side = LEFT, fill = Y)
       scrollbar.pack(side = RIGHT, fill = Y)
       frame.grid(row=0, column=1)
-      self.listbox.bind('<ButtonRelease-1>', self.clic)
+      self.listbox.bind('<ButtonRelease-1>', self.click)
       self.actualise_start_pos()
       
       define = Button(self.fen5, text="Define", command=self.define_start_pos)
@@ -750,10 +759,10 @@ class Application():
       self.listbox2.pack(side = LEFT, fill = Y)
       scrollbar.pack(side = RIGHT, fill = Y)
       frame.grid(row=0, column=1)
-      self.listbox2.bind('<ButtonRelease-1>', self.clic2)
+      self.listbox2.bind('<ButtonRelease-1>', self.click2)
       self.actualise_start_pos2(j)
       
-      create = Button(self.fen6, text="Create", command=lambda id=j: self.create_start_pos(id))
+      create = Button(self.fen6, text="New tail", command=lambda id=j: self.create_start_pos(id))
       create.grid(row=1, column=0, padx=2, pady=5)
       
       define = Button(self.fen6, text="Modify", command=lambda id=j: self.define_start_pos2(id))
@@ -846,7 +855,7 @@ class Application():
          self.listbox3.pack(side = LEFT, fill = Y)
          scrollbar.pack(side = RIGHT, fill = Y)
          frame.grid(row=0, column=0)
-         self.listbox3.bind('<ButtonRelease-1>', self.clic3)
+         self.listbox3.bind('<ButtonRelease-1>', self.click3)
          self.actualise_modif_start_pos()
          
          id_and_entries = [j, i]
@@ -891,8 +900,8 @@ class Application():
    def actualise_modif_start_pos(self):
       self.clicked3 = -1
       self.listbox3.delete(0, END)
-      for i in range(len(COULEURS)):
-         self.listbox3.insert(i, COULEURS[i])
+      for i in range(len(COLORS)):
+         self.listbox3.insert(i, COLORS[i])
    
    def modif_start_pos2(self, id_and_entries):
       if id_and_entries[1] == 0: #couleur
@@ -900,7 +909,7 @@ class Application():
          c = self.clicked3
          if c == -1: return
          print c
-         start_pos.modif(j, i, COULEURS[c])
+         start_pos.modif(j, i, COLORS[c])
       elif id_and_entries[1] == 1: #direction
          j, i, var = id_and_entries
          d = var.get()
@@ -917,20 +926,20 @@ class Application():
    
    
    
-   def clic(self, event):
+   def click(self, event):
       i = self.listbox.curselection()
       if len(i) == 0: return
       self.clicked = int(i[0])
       print self.clicked
    
    
-   def clic2(self, event):
+   def click2(self, event):
       i = self.listbox2.curselection()
       self.clicked2 = int(i[0])
       print self.clicked2
    
    
-   def clic3(self, event):
+   def click3(self, event):
       i = self.listbox3.curselection()
       self.clicked3 = int(i[0])
       print self.clicked3
@@ -939,7 +948,7 @@ class Application():
    def affiche(self):
       self.canevas.delete(ALL)
       
-      for m in murs.list:
+      for m in walls.list:
          for x in range(m[0], m[2]+1):
             for y in range(m[1], m[3]+1):
                x1 = x * TAILLE_CASE
@@ -970,7 +979,7 @@ class Application():
 
 
 
-class Murs():
+class Walls():
 
    def __init__(self):
       self.list = []
@@ -995,7 +1004,7 @@ class Murs():
       x1, y1, x2, y2 = self.list[i]
       return str(x1) + ", " + str(y1) + ", " + str(x2) + ", " + str(y2)
    
-   def load(self, filename):
+   def load(self, filename): #check section errors
       map = ConfigParser.RawConfigParser()
       try: map.read(MAPS_DIR+filename)
       except ConfigParser.MissingSectionHeaderError:
@@ -1003,7 +1012,7 @@ class Murs():
          return 0
       i = 1
       while 1:
-         try: m = eval(map.get("Murs", "murs"+str(i)))
+         try: m = eval(map.get("Walls", "wall"+str(i)))
          except ConfigParser.NoOptionError: break
          except NameError:
             appli.message("Can't read walls.")
@@ -1015,6 +1024,12 @@ class Murs():
             appli.message("Can't read walls.")
             return 0
          if type(m[0]) != int or type(m[1]) != int or type(m[2]) != int or type(m[3]) != int:
+            appli.message("Can't read walls.")
+            return 0
+         if m[2] < m[0] or m[3] < m[1]:
+            appli.message("Can't read walls.")
+            return 0
+         if m[0] < 0 or m[2] >= CASES_X or m[1] < 0 or m[3] >= CASES_Y:
             appli.message("Can't read walls.")
             return 0
          self.list.append(m)
@@ -1093,30 +1108,30 @@ class Start_Pos():
          return 0
       i = 1
       while 1:
-         try: j = eval(map.get("StartPos", "joueur"+str(i)))
+         try: j = eval(map.get("StartPos", "player"+str(i)))
          except ConfigParser.NoOptionError: break
          if self.check(j) == 0: return 0
          self.list.append(j)
          i += 1
-      return 1 #chargement OK
+      return 1 #loading OK
       
    def check(self, j):
       if type(j) != list:
          appli.message("Can't read start position.")
          return 0
-      if len(j) < 3: #si y a pas couleur, pas direction ou pas tête
+      if len(j) < 3: #if there isn't the color, the direction or the head
          appli.message("Can't read start position.")
          return 0
       for i in range(len(j)):
          l = j[i]
-         if i == 0: #couleur
-            if self.traduire(l) == 0: #si la couleur n'est pas une couleur
+         if i == 0: #color
+            if self.traduire(l) == 0: #if the color isn't a color
                appli.message("Can't read start position.")
                return 0
          elif i == 1: #direction
             if l != "g" and l != "h" and l != "d" and l != "b":
                appli.message("Can't read start position.")
-         else: #tête ou queue
+         else: #head or tail
             if type(l) != list:
                appli.message("Can't read start position.")
                return 0
@@ -1126,7 +1141,7 @@ class Start_Pos():
             if type(l[0]) != int or type(l[1]) != int:
                appli.message("Can't read start position.")
                return 0
-      return 1 #chargement OK
+      return 1 #loading OK
    
    def number(self, number):
       if len(self.list) > number:
