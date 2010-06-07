@@ -352,7 +352,7 @@ class Application():
       for m in inst_murs.list:
          #Détéction de carré 2x2 murs :
          if m[2] - m[0] == 2 and m[3] - m[1] == 2:
-            self.canevas.create_image(x1, y1, anchor = NW, image=self.img_murs_big)
+            self.canevas.create_image(m[0]* TAILLE_CASE, m[1]* TAILLE_CASE, anchor = NW, image=self.img_murs_big)
          else:
             for x in range(m[0], m[2]+1):
                for y in range(m[1], m[3]+1):

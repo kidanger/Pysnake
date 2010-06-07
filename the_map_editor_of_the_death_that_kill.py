@@ -857,7 +857,7 @@ class Application():
    def modif_start_pos(self, j, i):
       self.fen8 = Toplevel()
       self.fen8.title("Pysnake Map Editor")
-      self.fen8.grab_set()
+#      self.fen8.grab_set()
       self.fen8.focus_set()
       
       sp = start_pos.list[j][i]
