@@ -344,7 +344,7 @@ class Jeu(threading.Thread):
       objets.bonus()
       for i in clients:
          client = clients[i]
-         client.response_murs()
+   #      client.response_murs()
          client.instance_jeu.change_score(0)
          client.instance_jeu.resu(0)
       self.client.envoyer("serv Good_luck_everysnake_!")
@@ -362,10 +362,7 @@ class Jeu(threading.Thread):
       self.queues = []
       for q in list(murs.start_pos[self.client.id-1][3:]):
          self.queues.append(list(q))
-      #for i in range(len(murs.start_pos[self.client.id-1])):
-         #if i > 1:
-            #self.queues.append([murs.start_pos[self.client.id-1][i][0], murs.start_pos[self.client.id-1][i][1]])
-      
+
       self.derniere_phrase_date_de = 0
       self.speed = 1.0
       self.last_ms = 0
@@ -609,16 +606,16 @@ class Murs():
          #Send the new map crc:
          client.envoyer("map_crc " + self.crc, i, 0)
    
-   def send_to_client(self):
-      to_send = "murs "
-      for m in self.list:
-         x1 = m[0]
-         y1 = m[1]
-         x2 = m[2]
-         y2 = m[3]
-         if to_send=="murs ": to_send += str(x1)+","+str(y1)+","+str(x2)+","+str(y2)
-         else: to_send += ";"+str(x1)+","+str(y1)+","+str(x2)+","+str(y2)
-      return to_send
+#   def send_to_client(self):
+#      to_send = "murs "
+#      for m in self.list:
+#         x1 = m[0]
+#         y1 = m[1]
+#         x2 = m[2]
+#         y2 = m[3]
+#         if to_send=="murs ": to_send += str(x1)+","+str(y1)+","+str(x2)+","+str(y2)
+#         else: to_send += ";"+str(x1)+","+str(y1)+","+str(x2)+","+str(y2)
+#      return to_send
    
    def clean(self):
       self.list = []
@@ -761,16 +758,19 @@ class Client(threading.Thread):
    
    def response_map(self):
       log_debug("Request map received", "Client's Connection")
-      msg = "TODO"
-      self.envoyer(msg, self.id, 0)
+      log("Send the map", "Client's Connection")
+      file = murs.map + "_" + murs.crc + ".map"
+      for line in open("maps/" + file, "r").readlines():
+         msg = "map " +file+" "+ line.replace(" ", "_")
+         self.envoyer(msg, self.id, 0)
       log_debug("Reply map sent to "+str(self.id), "Client's Connection")
    
-   def response_murs(self):
-      log_debug("Request murs received", "Client's Connection")
-      msg = "response "
-      msg += murs.send_to_client()
-      self.envoyer(msg, self.id, 0)
-      log_debug("Reply murs sent to "+str(self.id), "Client's Connection")
+#   def response_murs(self):
+#      log_debug("Request murs received", "Client's Connection")
+#      msg = "response "
+#      msg += murs.send_to_client()
+#      self.envoyer(msg, self.id, 0)
+#      log_debug("Reply murs sent to "+str(self.id), "Client's Connection")
    
    
    
@@ -912,8 +912,8 @@ class Client(threading.Thread):
                elif msgClient[1] == "objets":
                   self.response_objets()
                
-               elif msgClient[1] == "murs":
-                  self.response_murs()
+       #        elif msgClient[1] == "murs":
+       #           self.response_murs()
                
                elif msgClient[1] == "map_crc":
                   self.response_map_crc()
