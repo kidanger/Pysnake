@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding:Utf-8 -*-
 
@@ -158,16 +159,15 @@ class Murs():
             self.list.append( eval(config.get("Walls", "wall" + str(i))) )
          except:
             break
-      i = 0
-      while 1:
-         i += 1
-         try:
-            self.start_pos.append( eval(config.get("StartPos", "player"+str(i))) )
-         except:
-            break
 
-
-
+   def check_map(self, file):
+      for x in listdir("maps/"):
+         crc = get_crc(open('maps/' + x, "r").read())
+         c = x[x.index("_")+1:x.index(".map")]
+         print c, crc
+         if crc == c:
+            return x, crc
+      return False
 
 
 
