@@ -352,6 +352,7 @@ class Application():
    
    def affiche_murs(self):
       if inst_murs.list == []:
+         print "murs vide !!"
          self.connection.send_request("map_crc")
          return 0
       for m in inst_murs.list:
@@ -806,11 +807,14 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             elif msg_recu[0] == "map_crc":
                crc = msg_recu[1]
                nom = inst_murs.got_map(crc)
-               if nom:
+               if nom and inst_murs.check_map(nom):
                   inst_murs.load_map(nom)
-                  print nom, "loaded"
                else:
                   self.envoyer("request map")
+            
+            elif msg_recu[0] == "map":
+               if not inst_murs.check_map(msg_recu[1]):
+                  open("maps/" +msg_recu[1], "a").write(msg_recu[2].replace("_", " "))
             
             elif msg_recu[0] == "response":
                
@@ -838,11 +842,11 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                   inst_objets.update(objets)
                   self.waiting_for_response = 0
                
-               elif msg_recu[1] == "murs": #To remove
-                  print "réponse à la requête murs reçue"
-                  #exemple : msg_recu = "response murs x1,y1,x2,y2;x1,y1,x2,y2"
-                  murs = msg_recu[2].split(";") #["x1,y1,x2,y2", "x1,y1,x2,y2"]
-                  inst_murs.update(murs)
+           #    elif msg_recu[1] == "murs": #To remove
+           #       print "réponse à la requête murs reçue"
+           #       #exemple : msg_recu = "response murs x1,y1,x2,y2;x1,y1,x2,y2"
+           #       murs = msg_recu[2].split(";") #["x1,y1,x2,y2", "x1,y1,x2,y2"]
+           #       inst_murs.update(murs)
                
       
       
