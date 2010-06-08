@@ -7,6 +7,8 @@ import threading, sys, socket, urllib2, time, os
 from datetime import datetime
 from Tkinter import *
 
+#Map's crc:
+from crc import *
 
 CASES_X = 32
 CASES_Y = 24
@@ -104,6 +106,11 @@ class Preappli():
        self.clicked = self.l1.get(i)  #On retourne l'élément (une string) sélectionné
        print self.clicked
 
+   def get_our_ip(self):
+      the_url = "http://pysnake.franceserv.com/masterserveur_client_ip.php"
+      req = urllib2.Request(the_url)
+      handle = urllib2.urlopen(req)
+      return handle.read()
 
    def valid(self):
       p = self.entry2.get()
@@ -131,10 +138,8 @@ class Preappli():
             self.fenetre.destroy()
             Application(self.connection)
       elif wanted == 2 and self.clicked != 0:
-         import urllib
-         page = urllib.urlopen("http://www.monip.org/").read()
-         ip = page.split("IP : ")[1].split("<br>")[0]
-         if self.clicked == ip: #on empèche au client de se co à sa propre ip
+         print self.get_our_ip(), self.clicked
+         if self.clicked == self.get_our_ip(): #on empèche au client de se co à sa propre ip
             self.clicked = "127.0.0.1"
          try:
             print "Connection à", self.clicked
@@ -347,7 +352,7 @@ class Application():
    
    def affiche_murs(self):
       if inst_murs.list == []:
-         self.connection.send_request("murs")
+         self.connection.send_request("map_crc")
          return 0
       for m in inst_murs.list:
          #Détéction de carré 2x2 murs :
@@ -609,7 +614,19 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             return 0
          return 1
       
+      elif msg[0] == "map_crc":
+            if len(msg) != 2:
+               print "Wrong number of parameters in : \""+msg_recu[9:]+"\" : "+str(len(msg)-1-1)+" for 3."
+               return 0
+            try: int(msg[1])
+            except ValueError:
+               print "Blabla.."
+               return 0
+            return 1
       
+      elif msg[0] == "map":
+         return "TODO"
+            
       elif msg[0] == "response":
          try: type = msg[1]
          except IndexError: 
@@ -777,7 +794,7 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                x, y = int(msg_recu[2]), int(msg_recu[3])
                snakes[id].move(x, y)
             
-            elif msg_recu[0] == "snake" or msg_recu[0] == "e":
+            elif msg_recu[0] == "snake" or msg_recu[0] == "e": #delete the "e" ?
                id = int(msg_recu[1])
                dir = msg_recu[2]
                couleur = msg_recu[3]
@@ -786,6 +803,14 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                except KeyError:
                   snakes[id] = Snake(dir, couleur, tete, queues)
             
+            elif msg_recu[0] == "map_crc":
+               crc = msg_recu[1]
+               nom = inst_murs.got_map(crc)
+               if nom:
+                  inst_murs.load_map(nom)
+                  print nom, "loaded"
+               else:
+                  self.envoyer("request map")
             
             elif msg_recu[0] == "response":
                
@@ -813,11 +838,12 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                   inst_objets.update(objets)
                   self.waiting_for_response = 0
                
-               elif msg_recu[1] == "murs":
+               elif msg_recu[1] == "murs": #To remove
                   print "réponse à la requête murs reçue"
                   #exemple : msg_recu = "response murs x1,y1,x2,y2;x1,y1,x2,y2"
                   murs = msg_recu[2].split(";") #["x1,y1,x2,y2", "x1,y1,x2,y2"]
                   inst_murs.update(murs)
+               
       
       
       print "Connection fermée"

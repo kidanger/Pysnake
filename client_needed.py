@@ -4,6 +4,10 @@
 PHRASES = ["Hi !", "Bye Bye !", "Good Luck !", "Thanks !", "Are you ok ?", "Yes !", "No !", "I'm the best :D", "Good Game !!", "Argh I'm laggy ! -.-", "XD", "I love this game !"]
 CHAT_MAX_MSG = 12
 
+#For map:
+from os import listdir
+from crc import *
+import ConfigParser
 
 class Joueurs():
 
@@ -73,6 +77,7 @@ class Objets():
 
 
 
+
 class Snake():
    
    def __init__(self, dir, couleur, tete, queues): # tete = [x, y] || queues = [[x, y], [x2, y2], ..., [xn, yn]]
@@ -119,6 +124,9 @@ class Snake():
       self.queues = []
 
 
+
+
+
 class Murs():
    
    def __init__(self):
@@ -133,3 +141,38 @@ class Murs():
          x2 = int(m[2])
          y2 = int(m[3])
          self.list.append([x1, y1, x2, y2])
+
+   def got_map(self, crc):
+      for x in listdir("maps/"):
+         if crc in x[x.index("_"):x.index(".map")]:
+            return x
+      return False
+
+   def load_map(self, nom):
+      config = ConfigParser.RawConfigParser()
+      config.read("maps/"+nom)
+      i = 0
+      while 1:
+         i += 1
+         try:
+            self.list.append( eval(config.get("Walls", "wall" + str(i))) )
+         except:
+            break
+      i = 0
+      while 1:
+         i += 1
+         try:
+            self.start_pos.append( eval(config.get("StartPos", "player"+str(i))) )
+         except:
+            break
+
+
+
+
+
+
+
+
+
+
+

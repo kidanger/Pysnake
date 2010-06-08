@@ -6,6 +6,9 @@ import sys, socket, threading, urllib, urllib2, time, datetime, os, ConfigParser
 from random import randrange
 from datetime import datetime
 
+#Map's crc:
+from crc import *
+
 global DEBUG
 DEBUG = False
 
@@ -559,14 +562,17 @@ class Murs():
       self.new_map()
       #[x1, y1, x2, y2]
    
-   def new_map(self, id = -1):
-      if id == -1:
-         id = randrange(0, len(MAPS))
-      config = ConfigParser.RawConfigParser()
-      try: config.read("maps/"+MAPS[id])
-      except:
-         log("Map not found, please change the \"maps\" option in config.ini", "Map")
-         return 0
+   def search_map(self, nom):
+      for x in os.listdir("maps/"):
+         crc = get_crc(open('maps/' + x, "r").read())
+         try:
+            n = x[: x.index(crc + ".map")-1 ]
+         except ValueError:
+            continue
+         if nom == n:
+            return x, crc
+   
+   def load_map(self, config):
       #Murs:
       i = 0
       while 1:
@@ -583,11 +589,25 @@ class Murs():
             self.start_pos.append( eval(config.get("StartPos", "player"+str(i))) )
          except:
             break
+   
+   def new_map(self, id = -1):
+      if id == -1:
+         id = randrange(0, len(MAPS))
+      file, self.crc = self.search_map(MAPS[id])
+      config = ConfigParser.RawConfigParser()
+      try: config.read("maps/"+file)
+      except:
+         log("Map not found, please change the \"maps\" option in config.ini", "Map")
+         return 0
+         
+      self.load_map(config)
       log("MAP : " + MAPS[id], "Map")
       self.map = MAPS[id]
       for i in clients:
          client = clients[i]
          client.envoyer("serv MAP:_" + MAPS[id], i, 0)
+         #Send the new map crc:
+         client.envoyer("map_crc " + self.crc, i, 0)
    
    def send_to_client(self):
       to_send = "murs "
@@ -733,6 +753,18 @@ class Client(threading.Thread):
       self.envoyer(msg, self.id, 0)
       log_debug("Reply objets sent to "+str(self.id), "Client's Connection")
    
+   def response_map_crc(self):
+      log_debug("Request map_crc received", "Client's Connection")
+      msg = "map_crc " + murs.crc
+      self.envoyer(msg, self.id, 0)
+      log_debug("Reply map_crc sent to "+str(self.id), "Client's Connection")
+   
+   def response_map(self):
+      log_debug("Request map received", "Client's Connection")
+      msg = "TODO"
+      self.envoyer(msg, self.id, 0)
+      log_debug("Reply map sent to "+str(self.id), "Client's Connection")
+   
    def response_murs(self):
       log_debug("Request murs received", "Client's Connection")
       msg = "response "
@@ -793,7 +825,7 @@ class Client(threading.Thread):
          if len(msg) != 2:
             print "Wrong number of parameters in : \""+msg_recu+"\" : "+str(len(msg)-1)+" for 1."
             return 0
-         if msg[1] != "joueurs" and msg[1] != "snakes" and msg[1] != "objets" and msg[1] != "murs" and msg[1] != "all":
+         if msg[1] != "joueurs" and msg[1] != "snakes" and msg[1] != "objets" and msg[1] != "murs" and msg[1] != "all" and msg[1] != "map_crc" and msg[1] != "map":
             print "Unknown request given in : \""+msg_recu+"\""
             return 0
          return 1
@@ -867,7 +899,7 @@ class Client(threading.Thread):
                   self.response_snakes()
                   self.response_joueurs()
                   self.response_objets()
-                  self.response_murs()
+                  self.response_map_crc()
                   ids[self.id] = 2
                   log_debug("Requetes envoyées à " +str(self.id)+ ", donc il passe en \"2\"", "Client's Connection")
                
@@ -882,6 +914,12 @@ class Client(threading.Thread):
                
                elif msgClient[1] == "murs":
                   self.response_murs()
+               
+               elif msgClient[1] == "map_crc":
+                  self.response_map_crc()
+               
+               elif msgClient[1] == "map":
+                  self.response_map()
       
       self.instance_jeu.deco = 1
       self.connexion.close()
