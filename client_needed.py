@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding:Utf-8 -*-
 
@@ -14,7 +13,8 @@ class Joueurs():
 
    def __init__(self):
       self.list = [] # [[0, kidanger, 0], [1, choupom, 0]]
-      for i in CHAT_MAX_MSG:
+      self.texts = []
+      for i in range(CHAT_MAX_MSG):
          self.texts.append([-1, ""])
    
    def ajout(self, id, pseudo, score=0):
