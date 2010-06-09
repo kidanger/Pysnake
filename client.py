@@ -132,9 +132,9 @@ class Preappli():
          except:
             return 0
          else:
+            self.glob()
             self.connection = Connection(self.Sock, self.entry2.get())
             self.connection.start()
-            self.glob()
             self.fenetre.destroy()
             Application(self.connection)
       elif wanted == 2 and self.clicked != 0:
@@ -146,9 +146,9 @@ class Preappli():
             self.Sock.connect((self.clicked, 4000))
          except: return 0
          else: 
+            self.glob()
             self.connection = Connection(self.Sock, self.entry2.get())
             self.connection.start()
-            self.glob()
             self.fenetre.destroy()
             appli = Application(self.connection)
    
