@@ -244,8 +244,9 @@ class Objets(threading.Thread):
       self.list.append([x, y, type])
       to_send = self.send_to_client()
       for id in clients:
-         c = clients[id]
-         c.envoyer(to_send, id)
+         if ids[id] == 2:
+            c = clients[id]
+            c.envoyer(to_send, id)
       return 1
    
    def suppr(self, id):
@@ -254,8 +255,9 @@ class Objets(threading.Thread):
       except: log_debug("Not deleted", "Object")
       to_send = self.send_to_client()
       for id in clients:
-         c = clients[id]
-         c.envoyer(to_send, id)
+         if ids[id] == 2:
+            c = clients[id]
+            c.envoyer(to_send, id)
    
 
 
@@ -277,7 +279,7 @@ class Jeu(threading.Thread):
       self.deco = 0
    
    def run(self):
-      self.client.envoyer(self.send_to_client())
+ #     self.client.envoyer(self.send_to_client())
       while True:
          if self.deco: break
          
@@ -540,6 +542,8 @@ class Jeu(threading.Thread):
          self.start_move = 1
    
    def send_to_client(self):
+      if ids[self.client.id] != 2:
+         return ""
       #exemple : id = 1, direction = "g", couleur = "bleu", tete = [1, 2], queues = [[1, 3]]
       to_send = "snake " + str(self.client.id) + " " + self.direction + " " + self.couleur + " " #"snake 1 g bleu"
       to_send += (str(self.tete[0]) + "," + str(self.tete[1])) #t = "snake 1 g bleu 1,2"
@@ -711,6 +715,7 @@ class Client(threading.Thread):
       self.instance_jeu.change_dir(dir)
    
    def connect(self):
+      ids[self.id] = 2
       for i in clients:
          c = clients[i]
          msg = "connect "+str(self.id)+" "+self.pseudo
@@ -868,16 +873,19 @@ class Client(threading.Thread):
             elif msgClient[0] == "connect":
                self.pseudo = msgClient[1]
                #A NETTOYER :
-               doit_pas_rester_ici_sous_peine_de_violentes_insultes = 0
+               doit_pas_rester_ici_sous_peine_de_violentes_insultes = False
                try: msgClient[2]
                except: log("His nickname : " + self.pseudo, "Client's Connection")
                else:
-                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "?"
+                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = True
                if len(self.pseudo) > 12 or " " in self.pseudo:
-                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "??"
+                  doit_pas_rester_ici_sous_peine_de_violentes_insultes = True
                for i in self.pseudo:
                   if ord(i) >= 128:
-                     doit_pas_rester_ici_sous_peine_de_violentes_insultes = 1; print "???"
+                     doit_pas_rester_ici_sous_peine_de_violentes_insultes = True
+               for i in clients:
+                  if self.pseudo == clients[i].pseudo and self != clients[i]:
+                     doit_pas_rester_ici_sous_peine_de_violentes_insultes = True
                if doit_pas_rester_ici_sous_peine_de_violentes_insultes:
                   print "Celui là on le sort, pas de discution possible !"
                   break
@@ -900,7 +908,6 @@ class Client(threading.Thread):
                   self.response_joueurs()
                   self.response_objets()
                   self.response_map_crc()
-                  ids[self.id] = 2
                   log_debug("Requetes envoyées à " +str(self.id)+ ", donc il passe en \"2\"", "Client's Connection")
                
                elif msgClient[1] == "joueurs":
@@ -924,7 +931,7 @@ class Client(threading.Thread):
       self.instance_jeu.deco = 1
       self.connexion.close()
       log_debug(str(self.id) + " deco")
-      del conn_client[self.id]
+      #del conn_client[self.id]
       del clients[self.id].instance_jeu
       del clients[self.id]
       ids[self.id] = 0
