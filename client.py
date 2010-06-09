@@ -199,7 +199,9 @@ class Application():
       ypos = 10
       self.fen.wm_geometry("%dx%d+%d+%d" % (largeur, hauteur, xpos, ypos))
       #self.list_pseudo_score = [[None, None], [None, None], [None, None], [None, None]] #liste des labels des pseudo
-      exec('self.list_pseudo_score = [' + "[None, None], " * (CLIENTS_MAX - 1) + '[None, None]]')
+      self.list_pseudo_score = []
+      for i in range(CLIENTS_MAX):
+         self.list_pseudo_score.append([None, None])
       self.place_tout()
       self.affichage()
       self.fen.mainloop()
@@ -241,9 +243,9 @@ class Application():
       self.cnv = Canvas(self.fen)
       self.cnv.grid(row=1, column=0, sticky='nswe')
       self.frm = Frame(self.cnv)
-      #self.labels = [None]*CHAT_MAX_MSG #dangereux
-      #self.labels = [None, None, None, None, None, None, None, None, None, None, None, None] #Pas de hard-coding
-      exec('self.labels = [' + "None, " * (CHAT_MAX_MSG - 1) + 'None]')
+      self.labels = []
+      for i in range(CHAT_MAX_MSG):
+         self.labels.append(None)
       for i in range(len(self.labels)):
          self.labels[i] = Label(self.frm, text= " ")
          self.labels[i].grid(row=i)
@@ -262,8 +264,7 @@ class Application():
       self.fen.bind("<Up>", self.connection.move)
       self.fen.bind("<Down>", self.connection.move)
       for i in range(len(PHRASES)):
-         cmd = "self.fen.bind('<F" + str(i+1) + ">', self.connection.say)"
-         exec(cmd)
+         self.fen.bind('<F' + str(i+1) + '>', self.connection.say)
       #on init les img
       self.img_murs = PhotoImage(file = SRC_MURS, master = self.canevas)
       self.img_murs_big = PhotoImage(file = SRC_MURS_BIG, master = self.canevas)
