@@ -13,10 +13,9 @@ import ConfigParser
 class Joueurs():
 
    def __init__(self):
-      self.list = [] # [[0, kidanger, 0], [1, choupom, 99]]
-      #self.texts = [["", ""]]*CHAT_MAX_MSG #[[pseudo, msg], ...]
-      #self.texts = [["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""], ["", ""]] #[[pseudo, msg], ...] #pas de hard-coding
-      exec('self.texts = [' + '[-1, ""],' * (CHAT_MAX_MSG - 1) + '[-1, ""]]') #[[id, msg], ..]
+      self.list = [] # [[0, kidanger, 0], [1, choupom, 0]]
+      for i in CHAT_MAX_MSG:
+         self.texts.append([-1, ""])
    
    def ajout(self, id, pseudo, score=0):
       a = [int(id), pseudo, int(score)]
