@@ -163,7 +163,6 @@ class Murs():
       for x in listdir("maps/"):
          crc = get_crc(open('maps/' + x, "r").read())
          c = x[x.index("_")+1:x.index(".map")]
-         print c, crc
          if crc == c:
             return x, crc
       return False
