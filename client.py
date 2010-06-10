@@ -11,10 +11,6 @@ from Tkinter import *
 #Map's crc:
 from crc import *
 
-if check_for_update():
-   print "Do update:",
-   do_update()
-   print "Done"
 
 CASES_X = 32
 CASES_Y = 24
@@ -56,15 +52,18 @@ class Preappli():
       self.fenetre = Tk()
       self.fenetre.title("Pysnake")
       self.fenetre.configure(width = 500, height = 500)
-      #Bouton, label, et tout :
-      Label(self.fenetre, text = "Pseudo : ").grid(row=3, column=0)
+
+      #Nickname label:
+      Label(self.fenetre, text = "Nickname : ").grid(row=3, column=0)
       
-      self.bou1 = Button(self.fenetre, text = "Quitter", command = sys.exit)
-      self.bou1.grid(row=4, column = 0)
-      self.bou2 = Button(self.fenetre, text = "Valider", command = self.valid)
-      self.bou2.grid(row=4, column=2)
-      Button(self.fenetre, text = "Rafraîchir la liste", command = self.actualise).grid(row=4,column=1)
+      #Some buttons:
+      Button(self.fenetre, text = "Quit", command = sys.exit).grid(row=4, column = 0)
+      self.update_button = Button(self.fenetre, text = "Update the game", fg = "red", bg = "black", command = self.update)
+      self.fenetre.after(100, self.check_update)
+      Button(self.fenetre, text = "Validate", command = self.valid).grid(row=3, column=2)
+      Button(self.fenetre, text = "Refresh the list", command = self.actualise).grid(row=4,column=1)
       
+      #Servermaster list
       self.f1 = Frame(self.fenetre)
       self.s1 = Scrollbar(self.f1)
       self.l1 = Listbox(self.f1)
@@ -74,20 +73,36 @@ class Preappli():
       self.s1.pack(side = RIGHT, fill = Y)
       self.f1.grid(row=2, column=1)
       
-      self.entry1 = Entry(self.fenetre) # IP
+      #IP entry:
+      self.entry1 = Entry(self.fenetre)
       self.entry1.grid(row=1, column=1)
-      self.entry2 = Entry(self.fenetre) # Pseudo
+      self.entry1.insert(0, "127.0.0.1")
+      
+      #Nickname entry:
+      self.entry2 = Entry(self.fenetre)
       self.entry2.grid(row=3, column=1)
       
+      #Radio:
       self.v=IntVar()
-      Radiobutton(self.fenetre, text="Connection à l'IP :", variable=self.v, value= 1).grid(row=1, column=0) #IP PRECISE
-      Radiobutton(self.fenetre, text="Masterserveur", variable=self.v, value= 2).grid(row=2, column=0) #MASTER
+      Radiobutton(self.fenetre, text="Log on the IP :", variable=self.v, value= 1).grid(row=1, column=0) #IP PRECISE
+      Radiobutton(self.fenetre, text="Masterserver", variable=self.v, value= 2).grid(row=2, column=0) #MASTER
       self.v.set(2)
       self.l1.bind('<ButtonRelease-1>', self.clic)  #on associe l'évènement "relachement du bouton gauche de la souris" à la listbox
       self.clicked = 0
+      
+      #Loop:
       self.fenetre.after(0, self.actualise)
       self.fenetre.mainloop()
 
+   def check_update(self):
+      if check_for_update():
+         self.update_button.grid(row = 4, column = 2)
+      else:
+         self.update_button.grid_forget()
+   
+   def update(self):
+      do_update()
+      self.check_update()
 
    def clic(self, evt):
        i=self.l1.curselection()  #Récupération de l'index de l'élément sélectionné
@@ -162,16 +177,12 @@ class Preappli():
       req = urllib2.Request(the_url)
       handle = urllib2.urlopen(req)
       the_page = handle.read()
-      print the_page
       y,x=0,0
       for i in range(len(the_page)):
          if the_page[i] == " ":
             x+=1
             self.l1.insert(x, the_page[y:i])
             y=i+1
-
-
-
 
 
 class Application():
