@@ -3,12 +3,18 @@
 
 
 from client_needed import *
+from update import *
 import threading, sys, socket, urllib2, time, os
 from datetime import datetime
 from Tkinter import *
 
 #Map's crc:
 from crc import *
+
+if check_for_update:
+   print "Do update:",
+   do_update()
+   print "Done"
 
 CASES_X = 32
 CASES_Y = 24
@@ -256,7 +262,6 @@ class Application():
          self.image_objet[i] = PhotoImage(file = SRC_OBJET[i], master = self.canevas)
       self.image_snake = {}
       parties = ["corps", "tete_b", "tete_h", "tete_g", "tete_d"]
-      couleurs = ["bleu", "rouge", "vert", "jaune", "orange", "rose", "violet"]
       for c in COULEURS:
          self.image_snake[c] = {}
          for p in parties:

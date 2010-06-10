@@ -16,6 +16,20 @@ DEBUG = False
 config = ConfigParser.RawConfigParser()
 config.read("autoexec.cfg")
 
+if eval(config.get("Other", "auto_update")):
+   from update import *
+   print "Check for update:",
+   if check_for_update():
+      print "True"
+      r = raw_input("Do you want to update pysnake ? (y/n)")
+      if r.upper() == "Y" or r.upper() == "YES" or r.upper() == "O" or r.upper() == "OUI":
+         do_update()
+         print "Update done, please restart"
+      else:
+         print "Aborted"
+   else:
+      print "False"
+
 #[Objets]
 OBJETS_WAIT_TIME = eval(config.get("Objets", "objets_wait_time"))
 OBJETS_MAX = eval(config.get("Objets", "objets_max"))
