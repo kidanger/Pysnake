@@ -11,7 +11,7 @@ from Tkinter import *
 #Map's crc:
 from crc import *
 
-if check_for_update:
+if check_for_update():
    print "Do update:",
    do_update()
    print "Done"
