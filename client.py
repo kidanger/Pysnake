@@ -13,34 +13,24 @@ from crc import *
 CASES_X = 32
 CASES_Y = 24
 TAILLE_CASE = 20 #changeable bien sûr
-C_QUEUE = "black" #noir
-C_MUR = "grey" #gris
-COULEUR_OBJET_TYPE_0 = "light green" #Bouffe
-COULEUR_OBJET_TYPE_1 = "light blue" #Accélérateur
-COULEUR_OBJET_TYPE_2 = "red" #Désaccélérateur
-COULEUR_OBJET_TYPE_3 = "brown" #Nocontrol
-COULEUR_OBJET_TYPE_4 = "pink" #Demi-tour
-COULEUR_OBJET_TYPE_5 = "yellow" #Armagetronad powa
-COULEUR_OBJET_TYPE_6 = "orange" #Apocalypse
 
 dir_ = os.getcwd() + "/"
 dir = dir_ + "img/objets/"
-SRC_OBJET_TYPE_0 = dir + "pomme.gif"
-SRC_OBJET_TYPE_1 = dir + "accel.gif"
-SRC_OBJET_TYPE_2 = dir + "decel.gif"
-SRC_OBJET_TYPE_3 = dir + "nocontrol.gif"
-SRC_OBJET_TYPE_4 = dir + "demi-tour.gif"
-SRC_OBJET_TYPE_5 = dir + "arma-powa.gif"
-SRC_OBJET_TYPE_6 = dir + "apocalypse.gif"
+SRC_OBJET = {}
+SRC_OBJET[0] = dir + "pomme.gif"
+SRC_OBJET[1] = dir + "accel.gif"
+SRC_OBJET[2]= dir + "decel.gif"
+SRC_OBJET[3] = dir + "nocontrol.gif"
+SRC_OBJET[4] = dir + "demi-tour.gif"
+SRC_OBJET[5] = dir + "arma-powa.gif"
+SRC_OBJET[6] = dir + "apocalypse.gif"
 
 dir = dir_ + "img/snakes/"
-SRC_SNAKES_BLEU = dir + "bleu/"
-SRC_SNAKES_ROUGE = dir + "rouge/"
-SRC_SNAKES_VERT = dir + "vert/"
-SRC_SNAKES_JAUNE = dir + "jaune/"
-SRC_SNAKES_ORANGE = dir + "orange/"
-SRC_SNAKES_ROSE = dir + "rose/"
-SRC_SNAKES_VIOLET = dir + "violet/"
+SRC_SNAKES = {}
+COULEURS = []
+for i in os.listdir(dir):
+   COULEURS.append(i)
+   SRC_SNAKES[i] = dir + i + "/"
 
 dir = dir_ + "img/murs/"
 SRC_MURS = dir + "murs.gif"
@@ -51,14 +41,6 @@ LENGTH_MAX_CLIENT = 20
 
 CLIENTS_MAX = 4
 CHAT_MAX_MSG = 12
-
-
-def include(list_ou_str, element_ou_caractere):
-   for i in range(len(list_ou_str)):
-      if list_ou_str[i] == element_ou_caractere:
-         return i
-   return False
-
 
 
 
@@ -265,17 +247,21 @@ class Application():
       self.fen.bind("<Down>", self.connection.move)
       for i in range(len(PHRASES)):
          self.fen.bind('<F' + str(i+1) + '>', self.connection.say)
-      #on init les img
-      self.img_murs = PhotoImage(file = SRC_MURS, master = self.canevas)
-      self.img_murs_big = PhotoImage(file = SRC_MURS_BIG, master = self.canevas)
+         
+      #On init les images:
+      self.image_murs = PhotoImage(file = SRC_MURS, master = self.canevas)
+      self.image_murs_big = PhotoImage(file = SRC_MURS_BIG, master = self.canevas)
+      self.image_objet = {}
       for i in range(7):
-         exec("self.objet_"+str(i)+" = PhotoImage(file = SRC_OBJET_TYPE_"+str(i)+", master = self.canevas)")
+         self.image_objet[i] = PhotoImage(file = SRC_OBJET[i], master = self.canevas)
+      self.image_snake = {}
       parties = ["corps", "tete_b", "tete_h", "tete_g", "tete_d"]
       couleurs = ["bleu", "rouge", "vert", "jaune", "orange", "rose", "violet"]
-      for c in range(len(couleurs)):
-         for p in range(len(parties)):
-            file = eval("SRC_SNAKES_" + couleurs[c].upper()) + parties[p] + ".gif"
-            exec("self.img_"+couleurs[c]+"_"+parties[p]+" = PhotoImage(file = \""+file+"\", master = self.canevas)")
+      for c in COULEURS:
+         self.image_snake[c] = {}
+         for p in parties:
+            file = SRC_SNAKES[c] + p + ".gif"
+            self.image_snake[c][p] = PhotoImage(file = file, master = self.canevas)
    
    def chat_update(self):
       #On reconfigure les labels
@@ -321,11 +307,7 @@ class Application():
          else:
             x1 = o[0]*TAILLE_CASE
             y1 = o[1]*TAILLE_CASE
-            #x2 = x1 + TAILLE_CASE
-            #y2 = y1 + TAILLE_CASE
-            #self.canevas.create_rectangle((x1, y1, x2, y2), fill=eval("COULEUR_OBJET_TYPE_"+str(o[2])), width=0)
-            #self.canevas.create_image(x1, y1, anchor = NW, image=eval("SRC_OBJET_TYPE_" + str(o[2])))
-            self.canevas.create_image(x1, y1, anchor = NW, image=eval("self.objet_" + str(o[2])))
+            self.canevas.create_image(x1, y1, anchor = NW, image=self.image_objet[o[2]])
    
    def affiche_snakes(self):
       for id in range(CLIENTS_MAX):
@@ -338,38 +320,26 @@ class Application():
             tete = snake.tete #[x, y]
             x1_tete = tete[0] * TAILLE_CASE
             y1_tete = tete[1] * TAILLE_CASE
-            #x2_tete = x1_tete + TAILLE_CASE
-            #y2_tete = y1_tete + TAILLE_CASE
-            #self.canevas.create_rectangle((x1_tete, y1_tete, x2_tete, y2_tete), fill=c_tete, width=0)
-            #self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=eval("SRC_SNAKES_" + c_tete.upper() + "tete_ + " + dir + ".gif"))
-            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=eval('self.img_'+couleur+'_' + "tete_"+dir))
+            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=self.image_snake[couleur]['tete_'+dir])
             for queue in snake.queues: #[x, y]
                x1 = queue[0] * TAILLE_CASE
                y1 = queue[1] * TAILLE_CASE
-               #x2 = x1 + TAILLE_CASE
-               #y2 = y1 + TAILLE_CASE
-               #self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_QUEUE, width = 0)
-               self.canevas.create_image(x1, y1, anchor = NW, image=eval("self.img_" + couleur + "_corps"))
+               self.canevas.create_image(x1, y1, anchor = NW, image=self.image_snake[couleur]['corps'])
    
    def affiche_murs(self):
       if inst_murs.list == []:
-         print "murs vide !!"
          self.connection.send_request("map_crc")
          return 0
       for m in inst_murs.list:
          #Détéction de carré 2x2 murs :
          if m[2] - m[0] == 2 and m[3] - m[1] == 2:
-            self.canevas.create_image(m[0]* TAILLE_CASE, m[1]* TAILLE_CASE, anchor = NW, image=self.img_murs_big)
+            self.canevas.create_image(m[0]* TAILLE_CASE, m[1]* TAILLE_CASE, anchor = NW, image=self.image_murs_big)
          else:
             for x in range(m[0], m[2]+1):
                for y in range(m[1], m[3]+1):
                   x1 = x * TAILLE_CASE
                   y1 = y * TAILLE_CASE
-                  #x2 = x1 + TAILLE_CASE
-                  #y2 = y1 + TAILLE_CASE
-                  #self.canevas.create_rectangle((x1, y1, x2, y2), fill=C_MUR, width=0)
-                  
-                  self.canevas.create_image(x1, y1, anchor = NW, image=self.img_murs)
+                  self.canevas.create_image(x1, y1, anchor = NW, image=self.image_murs)
 
    def update_tableau(self):
       for i in range(CLIENTS_MAX):
@@ -739,7 +709,7 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
          if msg_recu == "": break
          #print msg_recu
          
-         if include(msg_recu, "|") and self.check(msg_recu):
+         if "|" in msg_recu and self.check(msg_recu):
             msg_recu = msg_recu[:msg_recu.index('|')]
             msg_recu = msg_recu.split(" ")
             
