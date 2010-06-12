@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 
 PHRASES = ["Hi !", "Bye Bye !", "Good Luck !", "Thanks !", "Are you ok ?", "Yes !", "No !", "I'm the best :D", "Good Game !!", "Argh I'm laggy ! -.-", "XD", "I love this game !"]
-CHAT_MAX_MSG = 12
+CHAT_MAX_MSG = 10
 
 #For map:
 from os import listdir
@@ -40,19 +40,19 @@ class Joueurs():
             self.list[j][2] = int(score)
    
    def dit(self, id, phrase): #Ajoute un text à la liste utilisée par le chat
+      print phrase
       #On décale les phrases
       for i in range(len(self.texts)):
          if i != len(self.texts)-1:
             self.texts[i][0] = self.texts[i+1][0]
             self.texts[i][1] = self.texts[i+1][1]
       
-      try: int(phrase) #Si la phrase est un nombre => else
-      except ValueError: #sinon, ça vient du serv, on ajoute alors sa phrase
+      if id == 0: #si ça vient du serveur:
          self.texts[len(self.texts)-1][0] = -1
          self.texts[len(self.texts)-1][1] = phrase
-      else: #on ajoute la phrase => except
+      else:
          self.texts[len(self.texts)-1][0] = int(id)
-         self.texts[len(self.texts)-1][1] = PHRASES[int(phrase)-1]
+         self.texts[len(self.texts)-1][1] = phrase
 
 
 

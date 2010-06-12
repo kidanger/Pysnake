@@ -54,7 +54,7 @@ CASES_Y = 24
 SPEED_MIN = 1/(1.5**2) #2 deccel max
 
 LENGTH_MAX_SERVER = 256
-LENGTH_MAX_CLIENT = 20
+LENGTH_MAX_CLIENT = 50
 
 LENGTH_QUEUE_MAX = 38
 
@@ -683,14 +683,14 @@ class Client(threading.Thread):
                   if ids[id] == 2:
                      try: conn_client[id].send(msg)
                      except socket.error:
-                        log("Broken pipe", "Client's Connection")
+                        log_debug("Broken pipe", "Client's Connection")
                         self.connexion.close()
                         break
                   else: log_debug("Filtred for" + str(id), "Client's Connection")
                else:
                   try: conn_client[id].send(msg)
                   except socket.error:
-                     log("Broken pipe", "Client's Connection")
+                     log_debug("Broken pipe", "Client's Connection")
                      self.connexion.close()
                      break
       else: 
@@ -698,10 +698,10 @@ class Client(threading.Thread):
             try:
                conn_client[id_voulu].send(msg)
             except KeyError:
-               log("Connexion client pas encore prête...", "Client's Connection")
+               log_debug("Connexion client pas encore prête...", "Client's Connection")
                time.sleep(0.1)
             except socket.error:
-               log("Broken pipe", "Client's Connection")
+               log_debug("Broken pipe", "Client's Connection")
                self.connexion.close()
                break
             else: break
@@ -716,8 +716,8 @@ class Client(threading.Thread):
          log_debug(str(self.id) + " wants to flood", "Client's Connection")
          self.envoyer("serv You're_not_allowed_to_flood_!", self.id, 0)
       if self.chat_time == -1:
-         log_debug(self.nom + " (" + self.pseudo + ") want to say the " + str(n) + " sentence", "Client's Connection")
-         msg = "say " + str(self.id) + " " + str(n)
+         log_debug(self.nom + " (" + self.pseudo + ") want to say " + n , "Client's Connection")
+         msg = "say " + str(self.id) + " " + n
          for i in conn_client:
             self.envoyer(msg, i)
          #On l'empèche de flooder:
@@ -807,10 +807,6 @@ class Client(threading.Thread):
          if msg[1] == "":
             print "Invalid server message : \""+msg_recu+"\""
             return 0
-         try: int(msg[1])
-         except ValueError:
-            print "Wrong parameter in : \""+msg_recu+"\" : \""+msg[1]+"\" is not a number."
-            return 0
          return 1
       
       elif msg[0] == "dir": #"dir {direction}"
@@ -878,7 +874,7 @@ class Client(threading.Thread):
                break
             
             elif msgClient[0] == "say":
-               self.say(int(msgClient[1]))
+               self.say(msgClient[1])
             
             elif msgClient[0] == "dir": #"dir d" anciennement "move x y"
                dir = msgClient[1]

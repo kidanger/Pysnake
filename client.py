@@ -39,10 +39,10 @@ SRC_MURS = dir + "murs.gif"
 SRC_MURS_BIG = dir + "murs_big.gif"
 
 LENGTH_MAX_SERVER = 256
-LENGTH_MAX_CLIENT = 20
+LENGTH_MAX_CLIENT = 50
 
 CLIENTS_MAX = 4
-CHAT_MAX_MSG = 12
+CHAT_MAX_MSG = 10
 
 
 
@@ -91,7 +91,7 @@ class Preappli():
       self.clicked = 0
       
       #Loop:
-      self.fenetre.after(0, self.actualise)
+      self.fenetre.after(100, self.actualise)
       self.fenetre.mainloop()
 
    def check_update(self):
@@ -141,9 +141,12 @@ class Preappli():
             self.fenetre.destroy()
             Application(self.connection)
       elif wanted == 2 and self.clicked != 0:
-         print self.get_our_ip(), self.clicked
-         if self.clicked == self.get_our_ip(): #on empèche au client de se co à sa propre ip
-            self.clicked = "127.0.0.1"
+         try: ip = self.get_our_ip() #on empèche au client de se co à sa propre ip
+         except:
+            None
+         else:
+            if ip == self.clicked:
+               self.clicked = "127.0.0.1"
          try:
             print "Connection à", self.clicked
             self.Sock.connect((self.clicked, 4000))
@@ -192,8 +195,8 @@ class Application():
       self.marche = 1
       self.fen = Tk()
       self.fen.title('Pysnake')
-      hauteur = 730
-      largeur = 725
+      hauteur = 700
+      largeur = 830
       xpos = 10
       ypos = 10
       self.fen.wm_geometry("%dx%d+%d+%d" % (largeur, hauteur, xpos, ypos))
@@ -225,16 +228,11 @@ class Application():
       #Frame pour l'affichage des joueurs:
       self.frame = Frame(self.fen)
       self.frame.grid(row=0,column=1)
-      #Joueurs:
-      for i in range(CLIENTS_MAX): #Initialisation des labels pour les pseudo et score des joueurs
-         self.list_pseudo_score[i][0] = Label(self.frame, text = "")
-         self.list_pseudo_score[i][0].grid(row=i*2)
          
-         self.list_pseudo_score[i][1] = Label(self.frame, text = "")
-         self.list_pseudo_score[i][1].grid(row=i+(i+1))
       #Canevas
       self.canevas = Canvas(self.fen, bg="white", width=CASES_X*TAILLE_CASE, height=CASES_Y*TAILLE_CASE)
       self.canevas.grid(row = 0, column = 0)
+      
       #Quitter
       Button(self.fen, text='Quit', command=self.fen.quit).grid(row=1,column=1)
       
@@ -247,23 +245,36 @@ class Application():
          self.labels.append(None)
       for i in range(len(self.labels)):
          self.labels[i] = Label(self.frm, text= " ")
-         self.labels[i].grid(row=i)
-      #Aide mémoire près du chat
+         self.labels[i].grid(row=i, sticky = W)
+      self.chat_entry = Entry(self.frm)
+      self.chat_entry.grid(row = i+1)
+      self.fen.bind("<Return>", self.say)
+      
+      #Joueurs:
+      Label(self.frm, text= "                                    ").grid(row = 0, column = 1)
+      for i in range(CLIENTS_MAX): #Initialisation des labels pour les pseudo et score des joueurs
+         self.list_pseudo_score[i][0] = Label(self.frm, text = "")
+         self.list_pseudo_score[i][0].grid(row=i*2, column = 2)
+         
+         self.list_pseudo_score[i][1] = Label(self.frm, text = "")
+         self.list_pseudo_score[i][1].grid(row=i+(i+1), column = 2)
+      
+      #Aide mémoire
       aide=[""]*len(PHRASES)
-      Label(self.frm, text = "                               ").grid(column=1) #Juste pour avoir un décalage...
       for i in range(len(PHRASES)):
          aide[i] = 'F%s: "%s"' % (str(i+1), PHRASES[i])
-         Label(self.frm, text = aide[i]).grid(column = 2, row = i)
-      self.frm.update()
+         Label(self.frame, text = aide[i]).grid(column = 0, row = 10+i, sticky = W)
+      
       self.cnv.create_window(0, 0, window=self.frm, anchor=NW)
       self.cnv.configure(scrollregion=self.cnv.bbox(ALL))
+      
       #Events
       self.fen.bind("<Left>", self.connection.move)
       self.fen.bind("<Right>", self.connection.move)
       self.fen.bind("<Up>", self.connection.move)
       self.fen.bind("<Down>", self.connection.move)
       for i in range(len(PHRASES)):
-         self.fen.bind('<F' + str(i+1) + '>', self.connection.say)
+         self.fen.bind('<F' + str(i+1) + '>', self.connection._say)
          
       #On init les images:
       self.image_murs = PhotoImage(file = SRC_MURS, master = self.canevas)
@@ -278,6 +289,14 @@ class Application():
          for p in parties:
             file = SRC_SNAKES[c] + p + ".gif"
             self.image_snake[c][p] = PhotoImage(file = file, master = self.canevas)
+      self.frm.update()
+      self.frame.update()
+      self.fen.update()
+   
+   def say(self, event):
+      s = self.chat_entry.get()
+      if s != "":
+         self.connection.say(s)
    
    def chat_update(self):
       #On reconfigure les labels
@@ -287,6 +306,7 @@ class Application():
             msg = inst_joueurs.texts[i][1]
             pseudo = ""
             couleur = "black"
+            bg = "white"
             for j in inst_joueurs.list:
                if j[0] == id:
                   pseudo = j[1]
@@ -298,11 +318,11 @@ class Application():
                except KeyError:
                   0
                else:
-                  couleur = self.traduire(snake.couleur)
+                  couleur, bg = self.traduire(snake.couleur)
             else:
                pseudo = "SERVER"
             text = "<" + pseudo + "> " + msg
-            self.labels[i].configure(text=text, fg=couleur)
+            self.labels[i].configure(text=text, fg=couleur, bg=bg)
             
       ## Pour etre sur que les dimensions sont calculees
       self.frm.update()
@@ -366,21 +386,21 @@ class Application():
          else:
             try:
                snake = snakes[i+1]
-               couleur = self.traduire(snake.couleur)
-               self.list_pseudo_score[i][0].configure(text = j[1], fg = couleur)      #Affichage du pseudo du joueur en couleur
+               couleur, bg = self.traduire(snake.couleur)
+               self.list_pseudo_score[i][0].configure(text = j[1], fg = couleur, bg=bg)      #Affichage du pseudo du joueur en couleur
                self.list_pseudo_score[i][1].configure(text = "%s points" % str(j[2]))          #Affichage de son score
             except:
                self.list_pseudo_score[i][0].configure(text = j[1], fg = "black")      #Affichage du pseudo du joueur sans couleur
                self.list_pseudo_score[i][1].configure(text = "%s points" % str(j[2]))          #Affichage de son score
 
    def traduire(self, coul):
-      if coul == "bleu": return "blue"
-      if coul == "rouge": return "red"
-      if coul == "vert": return "green"
-      if coul == "jaune": return "yellow"
-      if coul == "orange": return "orange"
-      if coul == "rose": return "pink"
-      if coul == "violet": return "purple"
+      if coul == "bleu": return "blue", "white"
+      if coul == "rouge": return "red", "white"
+      if coul == "vert": return "green", "white"
+      if coul == "jaune": return "yellow", "black"
+      if coul == "orange": return "orange", "white"
+      if coul == "rose": return "pink", "black"
+      if coul == "violet": return "purple", "white"
 
 
 
@@ -402,20 +422,21 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
    def send_request(self, request):
       self.envoyer("request "+request)
    
-   def say(self, event): # (!) Hackers, this is just a spamless; you can remove it but you'll still can't flood ;)
+   def _say(self, event):
+      n = event.keysym[1:]
+      n = PHRASES[int(n)-1]
+      self.say(n)
+   
+   def say(self, phrase):
       dt = datetime.now()
       sec = dt.second
       if sec < self.chat_time: sec += 60
       if sec >= self.chat_time+1:
          self.chat_time = -1
       if self.chat_time == -1:
-         n = event.keysym[1:]
-         if n < len(PHRASES) or n > 0:
-            self.envoyer("say "+str(n))
-            print "Phrase \"%s\" envoyée" % PHRASES[int(n)-1]
+         self.envoyer("say "+phrase.replace(" ", "_"))
          dt = datetime.now()
          sec = dt.second
-#         self.chat_time = sec
    
    def move(self, event):
       if event.keysym == "Up": dir="h"
@@ -459,7 +480,7 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             return 0
          try:
             int(msg[1])
-            int(msg[2])
+          #  int(msg[2])
          except ValueError:
             print "Wrong parameter in : \""+msg_recu+"\" : \""+msg[1]+"\" or \""+msg[2]+"\" is not a number."
             return 0
@@ -613,7 +634,7 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             return 1
       
       elif msg[0] == "map":
-         return "TODO"
+         return 1
             
       elif msg[0] == "response":
          try: type = msg[1]
@@ -735,7 +756,7 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             
             if msg_recu[0] == "say":
                qui = msg_recu[1] #identifiant de celui qui parle
-               quoi = msg_recu[2] #id de la phrase dite
+               quoi = msg_recu[2].replace("_", " ") #phrase dite
                inst_joueurs.dit(qui, quoi)
             
             elif msg_recu[0] == "score":
