@@ -18,22 +18,21 @@ TAILLE_CASE = 20 #changeable bien sûr
 
 dir_ = os.getcwd() + "/"
 dir = dir_ + "img/items/"
-SRC_OBJET_TYPE_0 = dir + "pomme.gif"
-SRC_OBJET_TYPE_1 = dir + "accel.gif"
-SRC_OBJET_TYPE_2 = dir + "decel.gif"
-SRC_OBJET_TYPE_3 = dir + "nocontrol.gif"
-SRC_OBJET_TYPE_4 = dir + "demi-tour.gif"
-SRC_OBJET_TYPE_5 = dir + "arma-powa.gif"
-SRC_OBJET_TYPE_6 = dir + "apocalypse.gif"
+SRC_OBJET = {}
+SRC_OBJET[0] = dir + "pomme.gif"
+SRC_OBJET[1] = dir + "accel.gif"
+SRC_OBJET[2]= dir + "decel.gif"
+SRC_OBJET[3] = dir + "nocontrol.gif"
+SRC_OBJET[4] = dir + "demi-tour.gif"
+SRC_OBJET[5] = dir + "arma-powa.gif"
+SRC_OBJET[6] = dir + "apocalypse.gif"
 
 dir = dir_ + "img/snakes/"
-SRC_SNAKES_BLUE = dir + "blue/"
-SRC_SNAKES_RED = dir + "red/"
-SRC_SNAKES_GREEN = dir + "green/"
-SRC_SNAKES_YELLOW = dir + "yellow/"
-SRC_SNAKES_ORANGE = dir + "orange/"
-SRC_SNAKES_PINK = dir + "pink/"
-SRC_SNAKES_PURPLE = dir + "purple/"
+SRC_SNAKES = {}
+COULEURS = []
+for i in os.listdir(dir):
+   COULEURS.append(i)
+   SRC_SNAKES[i] = dir + i + "/"
 
 dir = dir_ + "img/walls/"
 SRC_WALL = dir + "wall.gif"
@@ -143,11 +142,11 @@ class Preappli():
             Application(self.connection)
       elif wanted == 2 and self.clicked != 0:
          try: ip = self.get_our_ip() #on empèche au client de se co à sa propre ip
-          except:
-             None
-          else:
-             if ip == self.clicked:
-                self.clicked = "127.0.0.1"
+         except:
+            None
+         else:
+            if ip == self.clicked:
+               self.clicked = "127.0.0.1"
          try:
             print "Connection à", self.clicked
             self.Sock.connect((self.clicked, 4000))
@@ -274,10 +273,6 @@ class Application():
       self.fen.bind("<Right>", self.connection.move)
       self.fen.bind("<Up>", self.connection.move)
       self.fen.bind("<Down>", self.connection.move)
-      
-      for i in range(len(PHRASES)):
-         cmd = "self.fen.bind('<F" + str(i+1) + ">', self.connection.say)"
-         exec(cmd)
          
       #on init les img
       self.img_wall = PhotoImage(file = SRC_WALL, master = self.canevas)
@@ -359,11 +354,11 @@ class Application():
             tete = snake.tete #[x, y]
             x1_tete = tete[0] * TAILLE_CASE
             y1_tete = tete[1] * TAILLE_CASE
-            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=eval('self.img_'+couleur+'_' + dir))
+            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=self.image_snake[couleur][dir])
             for queue in snake.queues: #[x, y]
                x1 = queue[0] * TAILLE_CASE
                y1 = queue[1] * TAILLE_CASE
-              self.canevas.create_image(x1, y1, anchor = NW, image=eval("self.img_" + couleur + "_tail"))
+               self.canevas.create_image(x1, y1, anchor = NW, image=self.image_snake[couleur]['tail'])
    
    def affiche_murs(self):
       if inst_murs.list == []:
@@ -735,7 +730,9 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
          except:
             print "Connexion interrompue avec le serveur"
             break
-         if msg_recu == "": break
+         if msg_recu == "":
+            print "Message vide reçu"
+            break
          #print msg_recu
          
          if "|" in msg_recu and self.check(msg_recu):
