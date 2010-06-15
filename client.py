@@ -17,26 +17,27 @@ CASES_Y = 24
 TAILLE_CASE = 20 #changeable bien sûr
 
 dir_ = os.getcwd() + "/"
-dir = dir_ + "img/objets/"
-SRC_OBJET = {}
-SRC_OBJET[0] = dir + "pomme.gif"
-SRC_OBJET[1] = dir + "accel.gif"
-SRC_OBJET[2]= dir + "decel.gif"
-SRC_OBJET[3] = dir + "nocontrol.gif"
-SRC_OBJET[4] = dir + "demi-tour.gif"
-SRC_OBJET[5] = dir + "arma-powa.gif"
-SRC_OBJET[6] = dir + "apocalypse.gif"
+dir = dir_ + "img/items/"
+SRC_OBJET_TYPE_0 = dir + "pomme.gif"
+SRC_OBJET_TYPE_1 = dir + "accel.gif"
+SRC_OBJET_TYPE_2 = dir + "decel.gif"
+SRC_OBJET_TYPE_3 = dir + "nocontrol.gif"
+SRC_OBJET_TYPE_4 = dir + "demi-tour.gif"
+SRC_OBJET_TYPE_5 = dir + "arma-powa.gif"
+SRC_OBJET_TYPE_6 = dir + "apocalypse.gif"
 
 dir = dir_ + "img/snakes/"
-SRC_SNAKES = {}
-COULEURS = []
-for i in os.listdir(dir):
-   COULEURS.append(i)
-   SRC_SNAKES[i] = dir + i + "/"
+SRC_SNAKES_BLUE = dir + "blue/"
+SRC_SNAKES_RED = dir + "red/"
+SRC_SNAKES_GREEN = dir + "green/"
+SRC_SNAKES_YELLOW = dir + "yellow/"
+SRC_SNAKES_ORANGE = dir + "orange/"
+SRC_SNAKES_PINK = dir + "pink/"
+SRC_SNAKES_PURPLE = dir + "purple/"
 
-dir = dir_ + "img/murs/"
-SRC_MURS = dir + "murs.gif"
-SRC_MURS_BIG = dir + "murs_big.gif"
+dir = dir_ + "img/walls/"
+SRC_WALL = dir + "wall.gif"
+SRC_WALL_BIG = dir + "wall_big.gif"
 
 LENGTH_MAX_SERVER = 256
 LENGTH_MAX_CLIENT = 50
@@ -142,11 +143,11 @@ class Preappli():
             Application(self.connection)
       elif wanted == 2 and self.clicked != 0:
          try: ip = self.get_our_ip() #on empèche au client de se co à sa propre ip
-         except:
-            None
-         else:
-            if ip == self.clicked:
-               self.clicked = "127.0.0.1"
+          except:
+             None
+          else:
+             if ip == self.clicked:
+                self.clicked = "127.0.0.1"
          try:
             print "Connection à", self.clicked
             self.Sock.connect((self.clicked, 4000))
@@ -228,6 +229,7 @@ class Application():
       #Frame pour l'affichage des joueurs:
       self.frame = Frame(self.fen)
       self.frame.grid(row=0,column=1)
+      
          
       #Canevas
       self.canevas = Canvas(self.fen, bg="white", width=CASES_X*TAILLE_CASE, height=CASES_Y*TAILLE_CASE)
@@ -262,9 +264,8 @@ class Application():
       #Aide mémoire
       aide=[""]*len(PHRASES)
       for i in range(len(PHRASES)):
-         aide[i] = 'F%s: "%s"' % (str(i+1), PHRASES[i])
-         Label(self.frame, text = aide[i]).grid(column = 0, row = 10+i, sticky = W)
-      
+         self.fen.bind('<F' + str(i+1) + '>', self.connection._say)
+   
       self.cnv.create_window(0, 0, window=self.frm, anchor=NW)
       self.cnv.configure(scrollregion=self.cnv.bbox(ALL))
       
@@ -273,26 +274,29 @@ class Application():
       self.fen.bind("<Right>", self.connection.move)
       self.fen.bind("<Up>", self.connection.move)
       self.fen.bind("<Down>", self.connection.move)
+      
       for i in range(len(PHRASES)):
-         self.fen.bind('<F' + str(i+1) + '>', self.connection._say)
+         cmd = "self.fen.bind('<F" + str(i+1) + ">', self.connection.say)"
+         exec(cmd)
          
-      #On init les images:
-      self.image_murs = PhotoImage(file = SRC_MURS, master = self.canevas)
-      self.image_murs_big = PhotoImage(file = SRC_MURS_BIG, master = self.canevas)
+      #on init les img
+      self.img_wall = PhotoImage(file = SRC_WALL, master = self.canevas)
+      self.img_wall_big = PhotoImage(file = SRC_WALL_BIG, master = self.canevas)
       self.image_objet = {}
       for i in range(7):
          self.image_objet[i] = PhotoImage(file = SRC_OBJET[i], master = self.canevas)
       self.image_snake = {}
-      parties = ["corps", "tete_b", "tete_h", "tete_g", "tete_d"]
+      parties = ["tail", "b", "h", "g", "d"]
+      couleurs = ["blue", "red", "green", "yellow", "orange", "pink", "purple"]
       for c in COULEURS:
          self.image_snake[c] = {}
          for p in parties:
             file = SRC_SNAKES[c] + p + ".gif"
-            self.image_snake[c][p] = PhotoImage(file = file, master = self.canevas)
+            self.image_snake[c][p] = PhotoImage(file = file, master = self.canevas)  
       self.frm.update()
       self.frame.update()
       self.fen.update()
-   
+      
    def say(self, event):
       s = self.chat_entry.get()
       if s != "":
@@ -306,7 +310,6 @@ class Application():
             msg = inst_joueurs.texts[i][1]
             pseudo = ""
             couleur = "black"
-            bg = "white"
             for j in inst_joueurs.list:
                if j[0] == id:
                   pseudo = j[1]
@@ -318,11 +321,11 @@ class Application():
                except KeyError:
                   0
                else:
-                  couleur, bg = self.traduire(snake.couleur)
+                  couleur = snake.couleur
             else:
                pseudo = "SERVER"
             text = "<" + pseudo + "> " + msg
-            self.labels[i].configure(text=text, fg=couleur, bg=bg)
+            self.labels[i].configure(text=text, fg=couleur)
             
       ## Pour etre sur que les dimensions sont calculees
       self.frm.update()
@@ -356,11 +359,11 @@ class Application():
             tete = snake.tete #[x, y]
             x1_tete = tete[0] * TAILLE_CASE
             y1_tete = tete[1] * TAILLE_CASE
-            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=self.image_snake[couleur]['tete_'+dir])
+            self.canevas.create_image(x1_tete, y1_tete, anchor = NW, image=eval('self.img_'+couleur+'_' + dir))
             for queue in snake.queues: #[x, y]
                x1 = queue[0] * TAILLE_CASE
                y1 = queue[1] * TAILLE_CASE
-               self.canevas.create_image(x1, y1, anchor = NW, image=self.image_snake[couleur]['corps'])
+              self.canevas.create_image(x1, y1, anchor = NW, image=eval("self.img_" + couleur + "_tail"))
    
    def affiche_murs(self):
       if inst_murs.list == []:
@@ -368,14 +371,14 @@ class Application():
          return 0
       for m in inst_murs.list:
          #Détéction de carré 2x2 murs :
-         if m[2] - m[0] == 2 and m[3] - m[1] == 2:
-            self.canevas.create_image(m[0]* TAILLE_CASE, m[1]* TAILLE_CASE, anchor = NW, image=self.image_murs_big)
+         if m[2] - m[0] == 1 and m[3] - m[1] == 1:
+            self.canevas.create_image(m[0]* TAILLE_CASE, m[1]* TAILLE_CASE, anchor = NW, image=self.img_wall_big)
          else:
             for x in range(m[0], m[2]+1):
                for y in range(m[1], m[3]+1):
                   x1 = x * TAILLE_CASE
                   y1 = y * TAILLE_CASE
-                  self.canevas.create_image(x1, y1, anchor = NW, image=self.image_murs)
+                  self.canevas.create_image(x1, y1, anchor = NW, image=self.img_wall)
 
    def update_tableau(self):
       for i in range(CLIENTS_MAX):
@@ -386,21 +389,12 @@ class Application():
          else:
             try:
                snake = snakes[i+1]
-               couleur, bg = self.traduire(snake.couleur)
-               self.list_pseudo_score[i][0].configure(text = j[1], fg = couleur, bg=bg)      #Affichage du pseudo du joueur en couleur
+               couleur = snake.couleur
+               self.list_pseudo_score[i][0].configure(text = j[1], fg = couleur)      #Affichage du pseudo du joueur en couleur
                self.list_pseudo_score[i][1].configure(text = "%s points" % str(j[2]))          #Affichage de son score
             except:
                self.list_pseudo_score[i][0].configure(text = j[1], fg = "black")      #Affichage du pseudo du joueur sans couleur
                self.list_pseudo_score[i][1].configure(text = "%s points" % str(j[2]))          #Affichage de son score
-
-   def traduire(self, coul):
-      if coul == "bleu": return "blue", "white"
-      if coul == "rouge": return "red", "white"
-      if coul == "vert": return "green", "white"
-      if coul == "jaune": return "yellow", "black"
-      if coul == "orange": return "orange", "white"
-      if coul == "rose": return "pink", "black"
-      if coul == "violet": return "purple", "white"
 
 
 
@@ -480,7 +474,6 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
             return 0
          try:
             int(msg[1])
-          #  int(msg[2])
          except ValueError:
             print "Wrong parameter in : \""+msg_recu+"\" : \""+msg[1]+"\" or \""+msg[2]+"\" is not a number."
             return 0
@@ -629,7 +622,6 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                return 0
             try: int(msg[1])
             except ValueError:
-               print "Blabla.."
                return 0
             return 1
       
@@ -850,13 +842,6 @@ class Connection(threading.Thread): # (!) Ne pas confondre Sock (sous forme self
                   inst_objets.update(objets)
                   self.waiting_for_response = 0
                
-           #    elif msg_recu[1] == "murs": #To remove
-           #       print "réponse à la requête murs reçue"
-           #       #exemple : msg_recu = "response murs x1,y1,x2,y2;x1,y1,x2,y2"
-           #       murs = msg_recu[2].split(";") #["x1,y1,x2,y2", "x1,y1,x2,y2"]
-           #       inst_murs.update(murs)
-               
-      
       
       print "Connection fermée"
       self.co = 0

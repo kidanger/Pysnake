@@ -282,7 +282,7 @@ class Jeu(threading.Thread):
 #      global conn_client
       threading.Thread.__init__(self, target = self.run)
       self.client = client
-      couleurs = ["bleu", "jaune", "orange", "rose", "rouge", "vert", "violet"]
+      couleurs = ["blue", "yellow", "orange", "pink", "red", "green", "purple"]
       for x in range(1, len(clients)+1):
          log_debug("Remove color: " + clients[x].instance_jeu.couleur, "Client's game")
          couleurs.remove(clients[x].instance_jeu.couleur)
@@ -800,7 +800,7 @@ class Client(threading.Thread):
       #               |ValueError : paramètres incorrects (exemple : "say a")  |
       #               \========================================================/
       
-      if msg[0] == "say": #"say {num}"
+      if msg[0] == "say": #"say {str}"
          if len(msg) != 2:
             print "Wrong number of parameters in : \""+msg_recu+"\" : "+str(len(msg)-1)+" for 1."
             return 0
